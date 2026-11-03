@@ -107,7 +107,7 @@ export default function WorkspacePage() {
         setApiError(
           err instanceof Error
             ? err.message
-            : "Could not connect to API server. Ensure the backend is running at http://localhost:8000."
+            : "Could not load matching songs. Try again."
         );
       } finally {
         setLoadingMatches(false);
@@ -120,7 +120,7 @@ export default function WorkspacePage() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [selectedChords, filters]);
+  }, [selectedChords, filters, isLoaded]);
 
   // Chord toggling handler
   const handleToggleChord = (chord: string) => {

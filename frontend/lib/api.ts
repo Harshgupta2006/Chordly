@@ -1,12 +1,26 @@
 /**
  * Typed API client for Chordly.
- * Single source of truth for all network requests from frontend to FastAPI backend.
+ * Uses the bundled matching engine so the Vercel frontend works without a FastAPI host.
+ * If NEXT_PUBLIC_API_URL points at a non-local backend, that remote API is used instead.
  * Never stores or requests lyrics.
  */
 
+import {
+  getAllChords,
+  getAllSongs,
+  getNextChords as matchNextChords,
+  getSongById,
+  getSongSheet as localGetSongSheet,
+  matchSongs as localMatchSongs,
+} from "./matchingEngine";
 import { Chord, MatchFilters, MatchResult, NextChordRecommendation, Song, SongSheet } from "./types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim() || "";
+const USE_REMOTE =
+  Boolean(configuredUrl) &&
+  !configuredUrl.includes("localhost") &&
+  !configuredUrl.includes("127.0.0.1");
+const BASE_URL = configuredUrl;
 
 class ApiError extends Error {
   status: number;
@@ -35,7 +49,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
           errorMessage = typeof errorData.detail === "string" ? errorData.detail : JSON.stringify(errorData.detail);
         }
       } catch {
-        // Fallback to response status text
         errorMessage = response.statusText || errorMessage;
       }
       throw new ApiError(errorMessage, response.status);
@@ -54,23 +67,20 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
-  /**
-   * Health check probe.
-   */
   async health(): Promise<{ status: string }> {
+    if (!USE_REMOTE) {
+      return { status: "ok" };
+    }
     return request<{ status: string }>("/health");
   },
 
-  /**
-   * Fetch all guitar chords with fingering arrays.
-   */
   async getChords(): Promise<Chord[]> {
+    if (!USE_REMOTE) {
+      return getAllChords();
+    }
     return request<Chord[]>("/chords");
   },
 
-  /**
-   * Fetch songs catalog with search and filtering.
-   */
   async getSongs(params: {
     q?: string;
     genre?: string;
@@ -79,6 +89,25 @@ export const api = {
     limit?: number;
     offset?: number;
   } = {}): Promise<{ items: Song[]; total: number; limit: number; offset: number }> {
+    if (!USE_REMOTE) {
+      const limit = Math.min(params.limit ?? 20, 100);
+      const offset = params.offset ?? 0;
+      const page = Math.floor(offset / limit) + 1;
+      const result = getAllSongs({
+        page,
+        limit,
+        genre: params.genre,
+        difficulty: params.difficulty_min,
+        q: params.q,
+      });
+      return {
+        items: result.items,
+        total: result.total,
+        limit: result.limit,
+        offset,
+      };
+    }
+
     const query = new URLSearchParams();
     if (params.q) query.set("q", params.q);
     if (params.genre) query.set("genre", params.genre);
@@ -91,13 +120,13 @@ export const api = {
     return request(`/songs${queryString ? `?${queryString}` : ""}`);
   },
 
-  /**
-   * Match songs against selected known chords.
-   */
   async matchSongs(
     knownChords: string[],
     filters: MatchFilters = {}
   ): Promise<MatchResult> {
+    if (!USE_REMOTE) {
+      return localMatchSongs(knownChords, filters);
+    }
     return request<MatchResult>("/match", {
       method: "POST",
       body: JSON.stringify({
@@ -111,13 +140,13 @@ export const api = {
     });
   },
 
-  /**
-   * Recommend next chords to learn.
-   */
   async getNextChords(
     knownChords: string[],
     limit: number = 3
   ): Promise<{ recommendations: NextChordRecommendation[] }> {
+    if (!USE_REMOTE) {
+      return matchNextChords(knownChords, limit);
+    }
     return request<{ recommendations: NextChordRecommendation[] }>("/next-chords", {
       method: "POST",
       body: JSON.stringify({
@@ -127,17 +156,25 @@ export const api = {
     });
   },
 
-  /**
-   * Fetch a single song by ID.
-   */
   async getSong(id: number): Promise<Song> {
+    if (!USE_REMOTE) {
+      const song = getSongById(id);
+      if (!song) {
+        throw new ApiError("Song not found", 404);
+      }
+      return song;
+    }
     return request<Song>(`/songs/${id}`);
   },
 
-  /**
-   * Fetch full chord+lyrics sheet for a song.
-   */
   async getSongSheet(id: number): Promise<SongSheet> {
+    if (!USE_REMOTE) {
+      const sheet = localGetSongSheet(id);
+      if (!sheet) {
+        throw new ApiError("Song not found", 404);
+      }
+      return sheet;
+    }
     return request<SongSheet>(`/songs/${id}/sheet`);
   },
 };
