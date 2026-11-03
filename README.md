@@ -4,16 +4,6 @@ Chordly is a guitar song discovery tool built for guitarists of all skill levels
 
 ---
 
-## Screenshot Placeholders
-
-- `[Screenshot: Main Discovery Workspace (/app) with Responsive Chord Selector]`
-- `[Screenshot: Song Detail & Chords/Lyrics Sheet (/app/song/[id])]`
-- `[Screenshot: Playable Songs & Near-Match Results with Difficulty Badges]`
-- `[Screenshot: "Best Chords to Learn Next" Recommendation Cards]`
-- `[Screenshot: Mobile Bottom-Sheet Chord Inspector]`
-
----
-
 ## How the Matching Engine Works
 
 Chordly evaluates song accessibility using pure set operations and multi-tier deterministic ranking:
