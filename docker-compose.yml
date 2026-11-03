@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: chordly_postgres
+    restart: unless-stopped
+    environment:
+      # Local development credentials only - never use in production
+      POSTGRES_DB: chordly
+      POSTGRES_USER: chordly_admin
+      POSTGRES_PASSWORD: chordly_local_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/scripts/init_db_roles.sql:/docker-entrypoint-initdb.d/init_db_roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chordly_admin -d chordly"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    driver: local

@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Private learning notes (never commit)
+docs/PRIVATE_NOTES.md
+
+# Raw data files (never commit)
+backend/data/raw/
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+.turbo/
+AGENTS.md
+frontend/AGENTS.md
+
+# Taste skill working files
+.taste-skill/
+
+# Misc
+*.log
+*.bak
+*.db
+*.sqlite*
+
+# Agent skills & scratch
+.agents/
+scratch/
+skills-lock.json
