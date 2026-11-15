@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": { "root": ".", "framework": "nextjs" },
+    "audio": {
+      "root": "audio_backend",
+      "framework": "fastapi",
+      "entrypoint": "main:app",
+      "functions": { "main.py": { "maxDuration": 60 } }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/audio/(.*)", "destination": { "service": "audio" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
+}

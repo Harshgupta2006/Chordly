@@ -1,0 +1,3 @@
+# Optional export/verification tools. Install only in ml/.venv; never on the server.
+onnx==1.23.2
+onnxruntime==1.32.0

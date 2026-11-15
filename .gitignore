@@ -15,12 +15,29 @@ build/
 .env
 .env.*
 !.env.example
+.envrc
+.vercel/
+.aws/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ed25519*
+credentials.json
+service-account*.json
+*-service-account.json
+*.tfstate*
+*.secret
+secrets/
 
 # Testing
 .pytest_cache/
 htmlcov/
 .coverage
 .mypy_cache/
+.ruff_cache/
 
 # IDE
 .vscode/
@@ -31,6 +48,7 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+/Microsoft/
 
 # Private learning notes (never commit)
 docs/PRIVATE_NOTES.md

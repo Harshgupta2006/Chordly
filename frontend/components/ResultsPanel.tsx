@@ -81,7 +81,7 @@ export function ResultsPanel({
     <div className="space-y-10">
       {/* 1. Playable Songs Section */}
       <div>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="flex h-3 w-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
           <h2 className="text-lg font-black text-zinc-100 tracking-tight">
             You Can Play These Now
@@ -114,7 +114,7 @@ export function ResultsPanel({
 
       {/* 2. Near Matches Section */}
       <div>
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="flex h-3 w-3 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50" />
           <h2 className="text-lg font-black text-zinc-100 tracking-tight">
             Almost There (1 or 2 Chords Away)

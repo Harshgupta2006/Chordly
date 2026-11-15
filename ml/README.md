@@ -1,9 +1,11 @@
 # Chordly ML — Guitar Chord Recognition
 
 This module contains our independently trained isolated-guitar-chord recognition
-prototype. Local FastAPI integration and an opt-in Next.js recording interface
-are implemented. Physical microphone/browser verification and evaluation on your
-own guitar are still pending. Nothing has been deployed.
+prototype. Local FastAPI integration and a Next.js recording interface are
+implemented. A CPU-only ONNX export and dedicated hosted FastAPI service are
+configured in `frontend/audio_backend/`; see the root README for deployment.
+Physical microphone/browser verification and evaluation on your own guitar
+remain pending.
 
 ## Measured status (14 November 2026)
 
@@ -51,8 +53,9 @@ node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port 3100
 Open `http://127.0.0.1:3100/app`. Record one strum, play it back, submit, and
 confirm the result. Only confirmation updates the existing known-chords list.
 WAV upload is available for repeatable checks. Uploaded audio is not persisted.
-Use Ctrl+C in each terminal to stop. The feature and microphone permission policy
-are disabled in production even when these development flags are set.
+Use Ctrl+C in each terminal to stop. These flags configure local development only. Production uses the same-origin
+`/api/audio/predict-chord` service and permits microphone access for the site.
+The original catalogue backend keeps its development-only audio route gate.
 
 ## Reproduce the experiment
 

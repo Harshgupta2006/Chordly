@@ -16,14 +16,15 @@ export function FilterBar({ filters, onChangeFilters, genres }: FilterBarProps) 
         {/* Search input */}
         <div className="relative lg:col-span-2">
           <input
-            type="text"
+            type="search"
+            aria-label="Search songs by title or artist"
             value={filters.q || ""}
             onChange={(e) => onChangeFilters({ ...filters, q: e.target.value })}
             placeholder="Search song title or artist..."
-            className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="w-full min-h-11 pl-9 pr-3.5 py-2 text-base sm:text-sm rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
           />
           <svg
-            className="w-4 h-4 text-zinc-500 absolute left-3 top-2.5 pointer-events-none"
+            className="w-4 h-4 text-zinc-500 absolute left-3 top-3.5 pointer-events-none"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -38,7 +39,7 @@ export function FilterBar({ filters, onChangeFilters, genres }: FilterBarProps) 
           <select
             value={filters.genre || ""}
             onChange={(e) => onChangeFilters({ ...filters, genre: e.target.value || undefined })}
-            className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="w-full min-h-11 px-3 py-2 text-base sm:text-sm rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             aria-label="Filter by genre"
           >
             <option value="">All Genres</option>
@@ -61,7 +62,7 @@ export function FilterBar({ filters, onChangeFilters, genres }: FilterBarProps) 
                 difficulty_max: undefined,
               })
             }
-            className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="w-full min-h-11 px-3 py-2 text-base sm:text-sm rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             aria-label="Filter by difficulty"
           >
             <option value="">Any Difficulty</option>
@@ -83,7 +84,7 @@ export function FilterBar({ filters, onChangeFilters, genres }: FilterBarProps) 
                 sort: (e.target.value as "best" | "easiest") || "best",
               })
             }
-            className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="w-full min-h-11 px-3 py-2 text-base sm:text-sm rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             aria-label="Sort order"
           >
             <option value="best">Sort: Best Match</option>

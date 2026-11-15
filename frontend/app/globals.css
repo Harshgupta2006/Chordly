@@ -19,3 +19,19 @@
 nextjs-portal {
   display: none !important;
 }
+
+/* Touch controls stay usable on phones without disabling browser zoom. */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px; }
+}
+@media (pointer: coarse) {
+  button, a[download] { min-height: 44px; min-width: 44px; touch-action: manipulation; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

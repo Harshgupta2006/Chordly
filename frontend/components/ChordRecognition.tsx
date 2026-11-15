@@ -95,7 +95,7 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
     if (!recording) return;
     setPhase("processing"); setError(null);
     const controller = new AbortController(); request.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
     try {
       const prediction = await predictChord(recording, controller.signal);
       if (alive.current) { setResult(prediction); setPhase("result"); }
@@ -113,20 +113,20 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
   const topScores = result ? Object.entries(result.class_scores).sort((a, b) => b[1] - a[1]).slice(0, 3) : [];
 
   return (
-    <section aria-labelledby="recognition-title" className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5">
+    <section aria-labelledby="recognition-title" className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="recognition-title" className="text-base font-bold text-zinc-100">Recognize a guitar chord</h2>
       </div>
       <p className="mt-2 text-xs leading-relaxed text-zinc-400">Play one isolated strum in a quiet room. Review the result before adding it to your chords.</p>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {phase === "recording" ? (
-          <button type="button" onClick={stop} className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400">Stop recording</button>
+          <button type="button" onClick={stop} className="min-h-11 rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400">Stop recording</button>
         ) : (
-          <button type="button" onClick={start} disabled={busy} className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-amber-400 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400">
+          <button type="button" onClick={start} disabled={busy} className="min-h-11 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-amber-400 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400">
             {phase === "requesting" ? "Requesting microphone…" : recording ? "Record again" : "Record a strum"}
           </button>
         )}
-        <label className={`text-xs text-zinc-400 underline underline-offset-4 ${busy ? "opacity-50" : "cursor-pointer hover:text-zinc-200"}`}>
+        <label className={`inline-flex min-h-11 items-center justify-center rounded-xl px-2 text-sm text-zinc-400 underline underline-offset-4 ${busy ? "opacity-50" : "cursor-pointer hover:text-zinc-200"}`}>
           Choose a WAV instead
           <input type="file" accept=".wav,audio/wav,audio/x-wav" disabled={busy} className="sr-only" aria-label="Choose a WAV recording"
             onChange={(event) => {
@@ -145,10 +145,10 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
         </span>
       </div>
       {preview && !busy && (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <audio controls src={preview} aria-label="Play back your recording" className="h-9 max-w-full" />
-          <a href={preview} download="strum.wav" className="text-xs text-zinc-400 underline underline-offset-4 hover:text-zinc-200">Save WAV</a>
-          <button type="button" onClick={submit} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-100 hover:bg-zinc-700">Recognize recording</button>
+        <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <audio controls src={preview} aria-label="Play back your recording" className="h-11 w-full min-w-0 sm:w-72" />
+          <a href={preview} download="strum.wav" className="inline-flex min-h-11 items-center justify-center px-2 text-sm text-zinc-400 underline underline-offset-4 hover:text-zinc-200">Save WAV</a>
+          <button type="button" onClick={submit} className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-100 hover:bg-zinc-700">Recognize recording</button>
         </div>
       )}
       {error && <p role="alert" className="mt-3 text-xs leading-relaxed text-rose-400">{error}</p>}
@@ -164,20 +164,20 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
           <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-400">
             {topScores.map(([label, score]) => <div key={label} className="flex gap-2"><dt>{formatChordLabel(label)}</dt><dd>{(score * 100).toFixed(1)}%</dd></div>)}
           </dl>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {canConfirm && <button type="button" className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-emerald-400"
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {canConfirm && <button type="button" className="min-h-11 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-emerald-400"
               onClick={() => {
                 if (result.chord && CANONICAL_CHORDS_SET.has(result.chord)) {
                   onConfirm(result.chord); setNotice(`${formatChordLabel(result.chord)} added to your known chords.`);
                   setResult(null); setRecording(null); setPhase("idle");
                 }
               }}>Confirm {formatChordLabel(result.chord!)} &amp; add to my chords</button>}
-            <button type="button" className="rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800"
+            <button type="button" className="min-h-11 rounded-xl border border-zinc-700 px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800"
               onClick={() => { setResult(null); setRecording(null); setPhase("idle"); setNotice("Result discarded. Your known chords were not changed."); }}>Discard result</button>
           </div>
         </div>
       )}
-      <p className="mt-4 text-[11px] leading-relaxed text-zinc-500">Your local recognition server does not save recordings. Choose Save WAV only if you want to keep a copy.</p>
+      <p className="mt-4 text-[11px] leading-relaxed text-zinc-500">Submitting sends this recording to Chordly for recognition. Recordings are discarded after processing. Choose Save WAV to keep a copy yourself.</p>
     </section>
   );
 }

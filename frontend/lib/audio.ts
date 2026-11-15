@@ -40,16 +40,20 @@ export interface ChordPrediction {
 }
 
 export async function predictChord(audio: Blob, signal: AbortSignal): Promise<ChordPrediction> {
-  const base = process.env.NEXT_PUBLIC_ML_API_URL || "http://127.0.0.1:8000";
+  const endpoint = process.env.NODE_ENV === "production"
+    ? "/api/audio/predict-chord"
+    : `${(process.env.NEXT_PUBLIC_ML_API_URL || "http://127.0.0.1:8100").replace(/\/$/, "")}/audio/predict-chord`;
   const body = new FormData(); body.append("audio", audio, "strum.wav");
   let response: Response;
   try {
-    response = await fetch(`${base.replace(/\/$/, "")}/audio/predict-chord`, { method: "POST", body, signal });
+    response = await fetch(endpoint, { method: "POST", body, signal });
   } catch (error) {
     if (signal.aborted) throw new Error("Recognition timed out or was cancelled. Please try again.");
-    throw new Error("The local recognition server is unavailable. Start it and try again.");
+    throw new Error("The recognition server is unavailable. Please try again shortly.");
   }
-  const result = await response.json();
+  const result = await response.json().catch(() => {
+    throw new Error("Recognition is temporarily unavailable. Please try again shortly.");
+  });
   if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "The recording could not be processed.");
   if (!result.class_scores || typeof result.model_score !== "number" || !["ok", "silence", "noise", "uncertain", "unsupported"].includes(result.status)) {
     throw new Error("The recognition server returned an invalid result.");

@@ -30,6 +30,33 @@ export default function WorkspacePage() {
   const [previewChord, setPreviewChord] = useState<string | null>("G");
   // Mobile bottom-sheet inspector open state
   const [inspectorOpen, setInspectorOpen] = useState<boolean>(false);
+  const inspectorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!inspectorOpen || window.matchMedia("(min-width: 1024px)").matches) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    inspectorRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setInspectorOpen(false);
+      if (event.key !== "Tab") return;
+      const buttons = inspectorRef.current?.querySelectorAll<HTMLButtonElement>("button");
+      if (!buttons?.length) return;
+      const first = buttons[0], last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    const onResize = () => { if (window.innerWidth >= 1024) setInspectorOpen(false); };
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
+      // Restore the control that opened the sheet after dismissal.
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [inspectorOpen]);
   // Filters state
   const [filters, setFilters] = useState<MatchFilters>({
     sort: "best",
@@ -220,7 +247,7 @@ export default function WorkspacePage() {
       </header>
 
       {/* Main Workspace Grid */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <main className="min-w-0 flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* API Error Alert if backend is offline */}
         {apiError && (
           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center justify-between">
@@ -242,8 +269,8 @@ export default function WorkspacePage() {
         {/* Top Split: Chord Selector & Fretboard Preview Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           {/* Chord Selection Grid (3 cols on desktop) */}
-          <div className="lg:col-span-3 space-y-6">
-            {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true" && (
+          <div className="min-w-0 lg:col-span-3 space-y-6">
+            {(process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true") && (
               <ChordRecognition onConfirm={handleAddChord} />
             )}
             <ChordSelector
@@ -252,9 +279,10 @@ export default function WorkspacePage() {
               onClearAll={handleClearAll}
               onSelectChords={setSelectedChords}
               previewChord={previewChord}
-              onPreviewChord={(chord) => {
+              onPreviewChord={setPreviewChord}
+              onInspectChord={(chord) => {
                 setPreviewChord(chord);
-                if (chord) setInspectorOpen(true);
+                if (window.innerWidth < 1024) setInspectorOpen(true);
               }}
             />
 
@@ -309,7 +337,7 @@ export default function WorkspacePage() {
           onAddChord={handleAddChord}
           onPreviewChord={(chord) => {
             setPreviewChord(chord);
-            if (chord) setInspectorOpen(true);
+            if (chord && window.innerWidth < 1024) setInspectorOpen(true);
           }}
           loading={loadingRecs}
         />
@@ -343,7 +371,10 @@ export default function WorkspacePage() {
           loading={loadingMatches}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
-          onSelectChordPreview={setPreviewChord}
+          onSelectChordPreview={(chord) => {
+            setPreviewChord(chord);
+            if (window.innerWidth < 1024) setInspectorOpen(true);
+          }}
           searchFilter={filters.q}
         />
       </main>
@@ -358,24 +389,29 @@ export default function WorkspacePage() {
       )}
 
       {/* Drawer panel */}
-      <div
+      {inspectorOpen && previewChord && <div
+        ref={inspectorRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chord inspector"
+        tabIndex={-1}
         className={`fixed inset-x-0 bottom-0 z-50 lg:hidden transform transition-transform duration-300 ${
           inspectorOpen && previewChord ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="bg-zinc-900 border-t border-zinc-800 rounded-t-3xl shadow-2xl px-5 pt-4 pb-8">
+        <div className="max-h-[85dvh] overflow-y-auto overscroll-contain bg-zinc-900 border-t border-zinc-800 rounded-t-3xl shadow-2xl px-5 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
           {/* Handle bar */}
           <div className="w-10 h-1 rounded-full bg-zinc-700 mx-auto mb-4" />
 
           {/* Header row */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
               Chord Inspector
             </span>
             <button
               type="button"
               onClick={() => setInspectorOpen(false)}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-colors text-sm font-bold"
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-colors text-sm font-bold"
               aria-label="Close chord inspector"
             >
               ✕
@@ -404,7 +440,7 @@ export default function WorkspacePage() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
