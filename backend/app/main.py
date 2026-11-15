@@ -506,3 +506,11 @@ def recommend_next_chords(
     ]
 
     return NextChordsResponse(recommendations=items)
+
+
+# Explicitly opt in for local ML development. Production never registers this
+# route, and importing the normal API does not require ML dependencies/weights.
+if not is_production and os.getenv("ENABLE_AUDIO_ML", "false").lower() == "true":
+    from app.audio import build_audio_router
+
+    app.include_router(build_audio_router(limiter))

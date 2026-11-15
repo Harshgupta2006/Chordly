@@ -1,0 +1,2 @@
+# Optional Python formatter/linter used for this implementation; install in .venv only.
+ruff==0.17.5

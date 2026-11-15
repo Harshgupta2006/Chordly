@@ -1,0 +1,4 @@
+# Optional local API dependencies, installed ONLY in ml/.venv.
+-r ../backend/requirements.txt
+python-multipart>=0.0.20
+uvicorn>=0.30

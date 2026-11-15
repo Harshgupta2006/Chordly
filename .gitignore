@@ -59,3 +59,13 @@ frontend/AGENTS.md
 .agents/
 scratch/
 skills-lock.json
+
+# ML module - raw data, processed arrays, model artifacts (never commit)
+ml/data/
+ml/artifacts/
+ml/.venv/
+ml/notebooks/.ipynb_checkpoints/
+ml/**/__pycache__/
+ml/**/*.pyc
+ml/**/*.pth
+ml/**/*.pt

@@ -1,0 +1,46 @@
+# Chordly ML — Python dependencies
+# Install inside ml/.venv (separate from backend/requirements.txt)
+#
+# HOW TO INSTALL (two steps required because PyTorch CUDA uses a separate index):
+#
+#   Step 1 — PyTorch with CUDA 12.1 (RTX 3050 / CUDA 12.x):
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+#
+#   Step 2 — All other packages:
+#     pip install -r requirements.txt
+#
+# If you do not have a CUDA-capable NVIDIA GPU, skip step 1 and instead run:
+#     pip install torch torchvision torchaudio
+#   (this installs the CPU-only version from PyPI)
+#
+# Full setup script: see ml/README.md
+
+# Audio processing
+librosa>=0.10.1
+soundfile>=0.12.1
+audioread>=3.0.1
+
+# Numerical computing
+numpy>=1.26.4
+scipy>=1.13.0
+
+# Machine learning (baseline models)
+scikit-learn>=1.4.2
+joblib>=1.3
+
+# Data & HuggingFace
+datasets>=2.19.0
+huggingface-hub>=0.23.0
+
+# Visualization
+matplotlib>=3.8.4
+seaborn>=0.13.2
+
+# Notebook support
+jupyter>=1.0.0
+ipykernel>=6.29.0
+nbformat>=5.10
+nbclient>=0.10
+
+# Testing
+pytest>=8.3.0

@@ -18,6 +18,7 @@ import { LearnNextPanel } from "@/components/LearnNextPanel";
 import { ProgressionPresets } from "@/components/ProgressionPresets";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import ChordlyLogo from "@/components/ChordlyLogo";
+import { ChordRecognition } from "@/components/ChordRecognition";
 
 // Available genres in Chordly catalogue
 const GENRES = ["country", "hiphop", "pop", "rnb", "rock"];
@@ -242,6 +243,9 @@ export default function WorkspacePage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           {/* Chord Selection Grid (3 cols on desktop) */}
           <div className="lg:col-span-3 space-y-6">
+            {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true" && (
+              <ChordRecognition onConfirm={handleAddChord} />
+            )}
             <ChordSelector
               selectedChords={selectedChords}
               onToggleChord={handleToggleChord}

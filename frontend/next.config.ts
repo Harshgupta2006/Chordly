@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 
+// This feature is explicitly local-only; production keeps its existing policy.
+const localAudioEnabled = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true";
+const localAudioUrl = new URL(process.env.NEXT_PUBLIC_ML_API_URL || "http://127.0.0.1:8000");
+if (localAudioEnabled && !["localhost", "127.0.0.1"].includes(localAudioUrl.hostname)) {
+  throw new Error("Local chord recognition requires a localhost/127.0.0.1 API URL.");
+}
+
 const nextConfig: NextConfig = {
   // A5: Explicitly disable client-side source maps in production to protect source code
   productionBrowserSourceMaps: false,
@@ -26,7 +33,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: localAudioEnabled ? "camera=(), microphone=(self), geolocation=()" : "camera=(), microphone=(), geolocation=()",
           },
           {
             key: "Content-Security-Policy",
@@ -36,7 +43,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: https:",
-              "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https:",
+              `connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https:${localAudioEnabled ? ` ${localAudioUrl.origin}` : ""}`,
+              ...(localAudioEnabled ? ["media-src 'self' blob:"] : []),
               "frame-ancestors 'none'",
             ].join("; "),
           },
