@@ -8,6 +8,7 @@ import { SongSheet, SongSheetPart } from "@/lib/types";
 import { Fretboard } from "@/components/Fretboard";
 import ChordlyLogo from "@/components/ChordlyLogo";
 import { PracticeButton } from "@/components/PracticeButton";
+import { GuitarBackdrop } from "@/components/GuitarScrollScene";
 import { getStoredPracticeList, toggleFavoriteSong } from "@/lib/localStorage";
 
 const DIFFICULTY_LABELS: Record<number, string> = {
@@ -125,7 +126,8 @@ export default function SongDetailPage() {
   const youtubeUrl = `https://www.youtube.com/results?search_query=${youtubeQuery}`;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+    <div id="chordly-song-sheet" className="workspace-page song-workspace min-h-screen text-zinc-100 flex flex-col">
+      <GuitarBackdrop targetId="chordly-song-sheet" />
       {/* Navigation */}
       <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center gap-4">
         <Link
@@ -146,7 +148,7 @@ export default function SongDetailPage() {
         </Link>
       </header>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
+      <main className="workspace-content flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
         {/* Song Header */}
         <section>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-100 mb-1.5">
@@ -367,7 +369,7 @@ export default function SongDetailPage() {
         )}
       </main>
 
-      <footer className="border-t border-zinc-900 bg-zinc-950/80 py-6 px-4 text-center text-xs text-zinc-500">
+      <footer className="relative z-10 border-t border-zinc-900 bg-zinc-950/80 py-6 px-4 text-center text-xs text-zinc-500">
         Chordly
       </footer>
     </div>

@@ -8,13 +8,13 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-export function GuitarBackdrop() {
+export function GuitarBackdrop({ targetId = "chordly-workspace" }: { targetId?: string }) {
   const background = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
     const media = gsap.matchMedia();
     media.add("(prefers-reduced-motion: no-preference)", () => {
-      const workspace = document.getElementById("chordly-workspace");
+      const workspace = document.getElementById(targetId);
       if (!workspace) return;
       const timeline = gsap.timeline({
         scrollTrigger: {
@@ -45,7 +45,7 @@ export function GuitarBackdrop() {
       };
     });
     return () => media.revert();
-  }, { scope: background });
+  }, { scope: background, dependencies: [targetId], revertOnUpdate: true });
 
   return (
     <div className="guitar-atmosphere" ref={background} aria-hidden="true">
@@ -107,12 +107,13 @@ export function GuitarScrollHero() {
           {["body", "neck", "head"].map((part, index) => (
             <div key={part} className={`guitar-part guitar-part-${part}`}>
               <Image
-                src="/images/guitar-studio.png"
+                src="/images/guitar-studio.webp"
                 alt=""
                 width={1024}
                 height={1536}
                 sizes="(max-width: 767px) 88vw, 650px"
                 priority={index === 0}
+                unoptimized
                 loading={index === 0 ? undefined : "eager"}
               />
             </div>

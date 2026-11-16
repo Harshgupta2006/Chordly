@@ -6,8 +6,10 @@ as the user scrolls. Two existing guitar photographs provide ambient background
 movement through the workspace. Reduced-motion preferences use the static scene.
 
 The generated asset is `frontend/public/images/guitar-studio.png`. It was created
-with the built-in image_gen tool and keeps its alpha channel. Next.js Image serves
-optimized display sizes. The existing portrait and macro photographs remain in
+with the built-in image_gen tool and keeps its alpha channel. The existing Sharp
+dependency produces the smaller `guitar-studio.webp` delivery asset with alpha.
+The scene serves that optimized file directly through Next.js Image to support
+the project's Vercel Services routing. The existing portrait and macro photographs remain in
 `frontend/public/images/`.
 
 The generation prompt was
