@@ -94,6 +94,15 @@ export function recordPractice(songId: number, now = new Date()): PersonalProfil
   return writeProfile({ ...current, history: [{ songId, practicedAt: now.toISOString() }, ...current.history] });
 }
 
+export function removePractice(songId: number, day?: string): PersonalProfile {
+  const current = readProfile().profile;
+  const history = current.history.filter(entry => {
+    if (entry.songId !== songId) return true;
+    return day !== undefined && localDay(entry.practicedAt) !== day;
+  });
+  return writeProfile({ ...current, history });
+}
+
 export function dismissRecommendation(songId: number): PersonalProfile {
   const current = readProfile().profile;
   return writeProfile({ ...current, dismissedSongIds: [...current.dismissedSongIds, songId] });

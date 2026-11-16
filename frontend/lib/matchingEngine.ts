@@ -84,11 +84,16 @@ export function getAllSongs(options: {
 
 export function matchSongs(
   knownChords: string[],
-  filters: MatchFilters = {}
+  filters: MatchFilters = {},
+  options: { songIds?: readonly number[]; includeAllMissing?: boolean } = {}
 ): MatchResult {
   const knownSet = new Set(knownChords);
 
   let pool = SONGS;
+  if (options.songIds) {
+    const ids = new Set(options.songIds);
+    pool = pool.filter(song => ids.has(song.id));
+  }
 
   if (filters.genre && filters.genre.trim()) {
     const genreLower = filters.genre.trim().toLowerCase();
@@ -119,8 +124,8 @@ export function matchSongs(
 
     if (count === 0) {
       playable.push(song);
-    } else if (count === 1 || count === 2) {
-      const maxMissingAllowed = filters.max_missing ?? 2;
+    } else if (options.includeAllMissing || count === 1 || count === 2) {
+      const maxMissingAllowed = options.includeAllMissing ? Infinity : filters.max_missing ?? 2;
       if (count <= maxMissingAllowed) {
         near.push({ song, missing, missing_count: count });
       }

@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { SongSheet, SongSheetPart } from "@/lib/types";
 import { Fretboard } from "@/components/Fretboard";
+import { SongBackLink, WorkspaceHomeLink } from "@/components/WorkspaceLinks";
 import ChordlyLogo from "@/components/ChordlyLogo";
 import { PracticeButton } from "@/components/PracticeButton";
-import { GuitarBackdrop } from "@/components/GuitarScrollScene";
+import { GuitarBackdrop, WorkspaceFooter } from "@/components/GuitarScrollScene";
 import { getStoredPracticeList, toggleFavoriteSong } from "@/lib/localStorage";
 
 const DIFFICULTY_LABELS: Record<number, string> = {
@@ -112,9 +112,9 @@ export default function SongDetailPage() {
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="text-rose-400 text-sm">{error || "Song not found"}</p>
-          <Link href="/app" className="text-amber-400 hover:underline text-xs">
+          <SongBackLink className="text-amber-400 hover:underline text-xs">
             Back to workspace
-          </Link>
+          </SongBackLink>
         </div>
       </div>
     );
@@ -130,28 +130,27 @@ export default function SongDetailPage() {
       <GuitarBackdrop targetId="chordly-song-sheet" />
       {/* Navigation */}
       <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center gap-4">
-        <Link
-          href="/app"
+        <SongBackLink
           className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-100 transition-colors text-xs font-semibold"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           Back
-        </Link>
+        </SongBackLink>
         <div className="h-4 w-px bg-zinc-800" />
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <WorkspaceHomeLink className="flex items-center gap-2.5 group">
           <ChordlyLogo size={28} />
           <span className="font-black text-sm tracking-tight text-zinc-100 group-hover:text-amber-400 transition-colors">
             Chordly
           </span>
-        </Link>
+        </WorkspaceHomeLink>
       </header>
 
       <main className="workspace-content flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
         {/* Song Header */}
         <section>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-100 mb-1.5">
+          <h1 id="song-heading" tabIndex={-1} className="break-words text-3xl sm:text-4xl font-black tracking-tight text-zinc-100 mb-1.5">
             {song.title}
           </h1>
           <p className="text-zinc-400 text-sm mb-4 font-medium">{song.artist}</p>
@@ -173,7 +172,7 @@ export default function SongDetailPage() {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="song-page-actions flex flex-wrap items-center gap-2 sm:gap-3">
             <PracticeButton songId={song.id} />
             <button
               type="button"
@@ -210,10 +209,13 @@ export default function SongDetailPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {song.chords.map((chordName) => (
-              <div
+              <button
                 key={chordName}
+                type="button"
+                aria-label={`Show ${chordName} chord fingering`}
+                aria-pressed={selectedChord === chordName}
                 onClick={() => setSelectedChord(chordName)}
-                className={`bg-zinc-900/70 border rounded-2xl p-4 flex flex-col items-center justify-between min-h-[180px] sm:min-h-[220px] transition-all cursor-pointer ${
+                className={`min-w-0 bg-zinc-900/70 border rounded-2xl p-4 flex flex-col items-center justify-between min-h-[180px] sm:min-h-[220px] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400 ${
                   selectedChord === chordName
                     ? "border-amber-500/80 bg-zinc-900 ring-2 ring-amber-500/30 shadow-lg shadow-amber-500/10"
                     : "border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900"
@@ -235,7 +237,7 @@ export default function SongDetailPage() {
                     dotColor="rgb(52 211 153)"
                   />
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -369,9 +371,7 @@ export default function SongDetailPage() {
         )}
       </main>
 
-      <footer className="relative z-10 border-t border-zinc-900 bg-zinc-950/80 py-6 px-4 text-center text-xs text-zinc-500">
-        Chordly
-      </footer>
+      <WorkspaceFooter focusTargetId="song-heading" />
     </div>
   );
 }

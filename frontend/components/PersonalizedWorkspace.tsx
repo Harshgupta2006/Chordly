@@ -13,12 +13,14 @@ import {
   GENRE_LABELS,
   localDay,
   MUSIC_GENRES,
+  removePractice,
   resetPersonalization,
   savePreferences,
 } from "@/lib/personalizationStorage";
-import { PersonalPreferences, PersonalizedSong } from "@/lib/types";
+import { NextChordRecommendation, PersonalPreferences, PersonalizedSong } from "@/lib/types";
 import { usePersonalization } from "@/lib/usePersonalization";
 import { PracticeButton } from "./PracticeButton";
+import { LearnNextPanel } from "./LearnNextPanel";
 
 const cataloguePage = getAllSongs({ limit: 100 });
 const CATALOGUE = Array.from({ length: cataloguePage.total_pages }, (_, index) =>
@@ -138,13 +140,13 @@ function RecommendationRow({ item, favorite, onFavorite, featured = false }: Rec
         <p className="personal-song-meta">
           {GENRE_LABELS[item.song.genre] || item.song.genre} · {LEVELS[item.song.difficulty - 1]}
         </p>
-        <Link href={`/app/song/${item.song.id}`} className="personal-song-title">
+        <Link href={`/app/song/${item.song.id}`} data-workspace-link={`recommendation-${item.song.id}`} className="personal-song-title">
           {item.song.title}
         </Link>
         <p className="mt-1 text-sm text-zinc-400">{item.song.artist}</p>
         <p className="personal-reason">{item.reasons.join(" · ")}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <Link className="personal-sheet-link" href={`/app/song/${item.song.id}`}>
+        <div className="personal-song-actions mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Link className="personal-sheet-link" data-workspace-link={`sheet-${item.song.id}`} href={`/app/song/${item.song.id}`}>
             Open song sheet <span aria-hidden="true">↗</span>
           </Link>
           <PracticeButton songId={item.song.id} />
@@ -184,13 +186,17 @@ interface PersonalizedWorkspaceProps {
   favorites: number[];
   onFavorite: (id: number) => void;
   onAddChord: (chord: string) => void;
+  learningRecommendations: NextChordRecommendation[];
+  learningLoading: boolean;
+  onPreviewChord: (chord: string) => void;
 }
 
 export function PersonalizedWorkspace({
-  knownChords, favorites, onFavorite, onAddChord,
+  knownChords, favorites, onFavorite, onAddChord, learningRecommendations, learningLoading, onPreviewChord,
 }: PersonalizedWorkspaceProps) {
   const { profile, loaded, persistent } = usePersonalization();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(true);
+  const [practiceNotice, setPracticeNotice] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
   const now = Date.now();
@@ -204,16 +210,12 @@ export function PersonalizedWorkspace({
     const candidates = rankPersonalizedSongs({ songs: CATALOGUE, profile, knownChords, favorites }, true);
     return personalizedNextChord(candidates, BARRE_CHORDS);
   }, [profile, knownChords, favorites]);
+  const otherLearning = learningRecommendations.filter(item => item.chord !== nextChord?.chord);
   const recent = [...new Map([...profile.history].reverse().map(entry => [entry.songId, entry])).values()]
     .sort((a, b) => Date.parse(b.practicedAt) - Date.parse(a.practicedAt))
     .map(entry => ({ ...entry, song: getSongById(entry.songId) }))
     .filter(entry => entry.song)
     .slice(0, 4);
-  const practiceDays = new Set(
-    profile.history
-      .filter(entry => now - Date.parse(entry.practicedAt) < 7 * 86400000)
-      .map(entry => localDay(entry.practicedAt))
-  ).size;
 
   if (!loaded) {
     return (
@@ -224,153 +226,152 @@ export function PersonalizedWorkspace({
   }
 
   return (
-    <section id="your-session" className="personal-workspace" aria-labelledby="personal-heading">
-      <div className="personal-heading-row">
-        <div>
-          <h2 id="personal-heading" className="personal-heading">Your next session.</h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
-            Songs shaped by your chords, favourites and practice.
+    <>
+      <section id="your-session" className="personal-workspace" aria-labelledby="personal-heading">
+        <div className="personal-heading-row">
+          <div>
+            <h2 id="personal-heading" className="personal-heading">Your next session.</h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
+              Songs shaped by your chords, favourites and practice.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="personal-preference-toggle"
+            aria-expanded={preferencesOpen}
+            aria-controls="personal-preferences"
+            onClick={() => {
+              setEditing(current => !current);
+              setConfirmReset(false);
+            }}
+          >
+            {preferencesOpen ? "Hide preferences" : "Show preferences"} <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+        {preferencesOpen && (
+          <div className="personal-shell" id="personal-preferences">
+            <PreferencesEditor
+              key={`${JSON.stringify(profile.preferences)}:${resetVersion}`}
+              preferences={profile.preferences}
+              onClose={() => setEditing(false)}
+            />
+          </div>
+        )}
+        {!persistent && (
+          <p role="status" className="text-sm text-amber-300">
+            Browser storage is unavailable. Your preferences and practice are kept for this tab session.
           </p>
-        </div>
-        <button
-          type="button"
-          className="personal-preference-toggle"
-          aria-expanded={preferencesOpen}
-          aria-controls="personal-preferences"
-          onClick={() => {
-            setEditing(current => !current);
-            setConfirmReset(false);
-          }}
-        >
-          Your preferences <span aria-hidden="true">↗</span>
-        </button>
-      </div>
-      {preferencesOpen && (
-        <div className="personal-shell" id="personal-preferences">
-          <PreferencesEditor
-            key={`${JSON.stringify(profile.preferences)}:${resetVersion}`}
-            preferences={profile.preferences}
-            onClose={() => setEditing(false)}
-          />
-        </div>
-      )}
-      {!persistent && (
-        <p role="status" className="text-sm text-amber-300">
-          Browser storage is unavailable. Your preferences and practice are kept for this tab session.
-        </p>
-      )}
-      <div className="personal-layout">
-        <div className="personal-shell">
-          <div className="personal-feed">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-100">For you</h2>
-              <a href="#song-catalogue" className="personal-text-button">
-                Browse all matches <span aria-hidden="true">↗</span>
-              </a>
+        )}
+        <div className="personal-layout">
+          <div className="personal-shell">
+            <div className="personal-feed">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold tracking-tight text-zinc-100">For you</h2>
+                <a href="#song-catalogue" className="personal-text-button">
+                  Browse all matches <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+              {suggestions.length ? suggestions.map((item, index) => (
+                <RecommendationRow
+                  key={item.song.id}
+                  item={item}
+                  featured={index === 0}
+                  favorite={favorites.includes(item.song.id)}
+                  onFavorite={onFavorite}
+                />
+              )) : (
+                <div className="personal-empty">
+                  <h3 className="text-lg font-medium text-zinc-200">No songs match these preferences</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                    Add a few known chords, adjust your practice level or reset hidden suggestions in your preferences.
+                  </p>
+                  <button className="personal-text-button mt-4" onClick={() => setEditing(true)}>
+                    Adjust preferences
+                  </button>
+                </div>
+              )}
             </div>
-            {suggestions.length ? suggestions.map((item, index) => (
-              <RecommendationRow
-                key={item.song.id}
-                item={item}
-                featured={index === 0}
-                favorite={favorites.includes(item.song.id)}
-                onFavorite={onFavorite}
-              />
-            )) : (
-              <div className="personal-empty">
-                <h3 className="text-lg font-medium text-zinc-200">No songs match these preferences</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                  Add a few known chords, adjust your practice level or reset hidden suggestions in your preferences.
-                </p>
-                <button className="personal-text-button mt-4" onClick={() => setEditing(true)}>
-                  Adjust preferences
-                </button>
+          </div>
+          <aside className="personal-side" aria-labelledby="practice-heading">
+            <div className="personal-shell">
+              <div className="personal-history">
+                <h2 id="practice-heading" tabIndex={-1} className="text-lg font-semibold tracking-tight text-zinc-100">Recently practised</h2>
+                {recent.length ? (
+                  <ul className="mt-5 divide-y divide-white/5">
+                    {recent.map(entry => (
+                      <li key={entry.songId} className="flex items-start justify-between gap-3 py-3 first:pt-0">
+                        <div className="min-w-0 flex-1">
+                        <Link href={`/app/song/${entry.songId}`} data-workspace-link={`practice-${entry.songId}`} className="block truncate text-sm font-medium text-zinc-200 hover:text-amber-300">
+                          {entry.song!.title}
+                        </Link>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {localDay(entry.practicedAt) === localDay(now)
+                            ? "Practised today"
+                            : new Date(entry.practicedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </p>
+                        </div>
+                        <button type="button" className="personal-text-button min-h-11 shrink-0"
+                          aria-label={`Remove ${entry.song!.title} from practice history`}
+                          onClick={event => {
+                            const next = event.currentTarget.closest("li")?.nextElementSibling?.querySelector<HTMLButtonElement>("button")
+                              ?? document.getElementById("practice-heading");
+                            removePractice(entry.songId);
+                            setPracticeNotice(`${entry.song!.title} removed from practice history.`);
+                            next?.focus({ preventScroll: true });
+                          }}>Remove</button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-5 text-sm leading-relaxed text-zinc-400">
+                    Mark a song as practised to build your history and shape your next recommendations.
+                  </p>
+                )}
+                <p role="status" className="sr-only">{practiceNotice}</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+        {preferencesOpen && (
+          <div className="personal-data-controls">
+            <button className="personal-text-button" onClick={() => setConfirmReset(true)}>
+              Reset personalization
+            </button>
+            {confirmReset && (
+              <div className="personal-reset" role="group" aria-label="Confirm personalization reset">
+                <p>Clear preferences, practice history and hidden suggestions? Your saved chords and favourites will stay.</p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <button className="personal-text-button text-amber-300" onClick={() => {
+                    resetPersonalization();
+                    setResetVersion(version => version + 1);
+                    setConfirmReset(false);
+                  }}>
+                    Clear personalization
+                  </button>
+                  <button className="personal-text-button" onClick={() => setConfirmReset(false)}>Cancel</button>
+                </div>
               </div>
             )}
           </div>
-        </div>
-        <aside className="personal-side" aria-label="Your practice and next chord">
-          {nextChord && (
-            <div className="personal-shell">
-              <div className="personal-next-chord">
-                <h2 className="text-sm font-medium text-zinc-400">A chord worth learning</h2>
-                <div className="mt-5 flex items-end justify-between gap-4">
-                  <p className="personal-chord-name">{nextChord.chord}</p>
-                  <span className="pb-2 text-sm text-zinc-400">
-                    {nextChord.songs.length} {nextChord.songs.length === 1 ? "song opens up" : "songs open up"}
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-relaxed text-zinc-300">
-                  Try it with <span className="text-zinc-100">{nextChord.songs[0].title}</span>.
-                </p>
-                <button
-                  type="button"
-                  className="personal-primary mt-6 w-full"
-                  onClick={() => onAddChord(nextChord.chord)}
-                >
-                  Add {nextChord.chord} to my chords
-                  <span className="personal-button-icon" aria-hidden="true">↗</span>
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="personal-shell">
-            <div className="personal-history">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-100">Your practice</h2>
-                <span className="text-xs text-zinc-500">
-                  {practiceDays} {practiceDays === 1 ? "day" : "days"} this week
-                </span>
-              </div>
-              {recent.length ? (
-                <ul className="mt-5 divide-y divide-white/5">
-                  {recent.map(entry => (
-                    <li key={entry.songId} className="py-3 first:pt-0">
-                      <Link href={`/app/song/${entry.songId}`} className="block truncate text-sm font-medium text-zinc-200 hover:text-amber-300">
-                        {entry.song!.title}
-                      </Link>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {localDay(entry.practicedAt) === localDay(now)
-                          ? "Practised today"
-                          : new Date(entry.practicedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-5 text-sm leading-relaxed text-zinc-400">
-                  Mark a song as practised to build your history and shape your next recommendations.
-                </p>
-              )}
-              <p className="mt-6 text-xs leading-relaxed text-zinc-500">
-                {persistent ? "Saved in this browser on this device." : "Kept in this tab session."}
-              </p>
-            </div>
-          </div>
-        </aside>
-      </div>
-      {preferencesOpen && (
-        <div className="personal-data-controls">
-          <button className="personal-text-button" onClick={() => setConfirmReset(true)}>
-            Reset personalization
-          </button>
-          {confirmReset && (
-            <div className="personal-reset" role="group" aria-label="Confirm personalization reset">
-              <p>Clear preferences, practice history and hidden suggestions? Your saved chords and favourites will stay.</p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <button className="personal-text-button text-amber-300" onClick={() => {
-                  resetPersonalization();
-                  setResetVersion(version => version + 1);
-                  setConfirmReset(false);
-                }}>
-                  Clear personalization
-                </button>
-                <button className="personal-text-button" onClick={() => setConfirmReset(false)}>Cancel</button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
+      </section>
+      {(nextChord || learningLoading || otherLearning.length > 0) && (
+        <section id="learn-next" className="scroll-mt-24 space-y-6" aria-labelledby="learn-next-heading">
+          <h2 id="learn-next-heading" className="personal-heading">Learn next.</h2>
+          <LearnNextPanel
+            personalizedRecommendation={nextChord ? {
+              chord: nextChord.chord,
+              unlock_count: nextChord.songs.length,
+              unlocked_songs: nextChord.songs.map(song => song.title),
+              is_barre: BARRE_CHORDS.has(nextChord.chord),
+            } : undefined}
+            recommendations={otherLearning}
+            onAddChord={onAddChord}
+            onPreviewChord={onPreviewChord}
+            loading={learningLoading}
+          />
+        </section>
       )}
-    </section>
+    </>
   );
 }

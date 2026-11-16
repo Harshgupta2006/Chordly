@@ -5,6 +5,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
   themeColor: "#09090b",
 };
 
@@ -14,9 +15,9 @@ export const metadata: Metadata = {
   keywords: ["guitar chords", "song discovery", "guitar tabs", "chord finder", "learn guitar songs"],
   authors: [{ name: "Chordly Team" }],
   icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/logo-pick.svg",
+    shortcut: "/logo-pick.svg",
+    apple: "/logo-pick.svg",
   },
 };
 

@@ -12,6 +12,8 @@ recognize a chord, review the result, and confirm it before adding it to your li
 - Audio predictions display explicit major and minor chord names.
 - Responsive recording controls, touch targets, filters and chord inspector.
 - A personalized For You feed, genre preferences and device-local practice history.
+- A scroll-driven guitar anatomy tour with numbered, interactive part labels.
+- Favorites shortcuts, return-position restoration and reversible practice tracking.
 
 ```text
 Browser -> Next.js / React / TypeScript
@@ -31,7 +33,7 @@ difficulty, and recommends which new chord unlocks the most songs.
 The dedicated hosted audio service lives in `frontend/audio_backend/`. It has no
 database connection. `frontend/vercel.json` defines web and Python services within
 the existing Vercel project root (`frontend`), routing `/api/audio/*` to FastAPI.
-[Vercel Services](https://vercel.com/docs/services) is currently in beta.
+The deployment uses [Vercel Services](https://vercel.com/docs/services).
 
 ## Frontend architecture and logic
 
@@ -150,14 +152,40 @@ spacing.
 Recording actions stack on narrow screens, playback uses the available width,
 and touch controls have larger targets. Search and filter controls adapt across
 screen sizes, headings wrap, and reduced-motion preferences adjust animations.
+Phone navigation keeps Favorites visible and provides comfortably sized tap
+targets. Song-sheet actions stack vertically, chord diagrams scale within their
+cards, and diagrams support keyboard selection. The mobile inspector scrolls
+within the screen and accounts for the phone's safe area.
+Progression presets display complete descriptions on phones and touch devices;
+desktop descriptions appear on hover or keyboard focus. Each preset's active
+state follows its exact chord order.
 Song cards combine difficulty, chord requirements, favourites, practice-sheet
 navigation and guitar-lesson search links.
 
-The opening guitar scene uses layered artwork, CSS perspective and GSAP
-ScrollTrigger to rotate and separate the instrument as the page scrolls. Ambient
-body and fretboard photographs move at different depths behind the workspace.
-Motion is reduced on small screens and respects reduced-motion preferences.
-A back-to-top arrow in the footer returns focus to the opening heading.
+The opening guitar anatomy tour uses one continuous photograph and GSAP
+ScrollTrigger to guide close-ups of the tuning area, playing surface, body and
+bridge. Numbered labels match markers on the guitar. Hovering, focusing or tapping
+a label highlights its pointer. Compact screens and reduced-motion preferences
+use readable static explanations. Ambient body and fretboard photographs provide
+background movement through the workspace and song sheets.
+
+Audio recognition and manual chord selection share a setup area after the tour.
+Matching songs follow, with separate Show more controls for playable songs and
+near matches. Personalized songs and recent practice come next, followed by a
+combined learning section that prioritizes personalized chord advice.
+Learning suggestions share the same card layout, chord typography and shape-preview
+and add-chord controls. Shape previews bring the desktop inspector into view or
+open its mobile drawer.
+Footer arrows return to the top and focus the opening heading on the workspace
+and the song title on both song-page routes.
+
+The Chordly logo returns to the opening view. Favorites jumps to saved songs and
+toggles back to ordinary matches on a second click. Opening a song preserves the
+workspace filters, expanded results and reading position for the return journey.
+Music preferences open by default. The Recently practised panel offers a Remove action,
+and clicking a song's Practised today control again removes that day's entry.
+The amber pick-and-headstock logo uses the supplied artwork with a transparent
+background and links back to the opening view throughout the application.
 
 | Frontend area | Main implementation |
 | --- | --- |
@@ -268,11 +296,10 @@ outside `public/`.
   outputs. It contains filenames/patterns, never secret values. The small ONNX
   inference export is intentionally included in server source.
 - A redacted credential-pattern scan checks source and reachable Git history in
-  CI. It cannot recognize every possible secret format. If a real credential was
-  ever committed, revoke/rotate it at its provider; `.gitignore` cannot erase old
-  Git history or existing deployments.
+  CI. Credential management and incident-response procedures are documented in
+  the security guide.
 
-Read [security controls and remaining limits](SECURITY.md).
+Read [security controls](SECURITY.md).
 
 ## Verification
 

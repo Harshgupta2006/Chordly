@@ -59,15 +59,16 @@ nextjs-portal {
   background-image: url("/images/guitar-macro.webp");
 }
 .guitar-background-shade { position: absolute; inset: 0; background: linear-gradient(#09090b66, transparent 35%, #09090b33); }
-.guitar-hero {
+.guitar-hero { position: relative; }
+.guitar-hero-viewport {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  min-height: min(780px, 88svh);
-  padding: 4rem 0 6rem;
-  perspective: 1200px;
+  gap: 2rem;
+  padding: 2rem 0;
 }
-.guitar-hero-copy { position: relative; z-index: 2; width: 56%; }
+.guitar-hero-copy { position: relative; z-index: 2; }
 .guitar-hero h1 {
   max-width: 46rem;
   font-size: clamp(3rem, 6.6vw, 6.4rem);
@@ -81,10 +82,9 @@ nextjs-portal {
 .guitar-hero-copy p { max-width: 26rem; margin-top: 1.75rem; font-size: .95rem; line-height: 1.8; color: #a8a6a1; }
 .guitar-hero-action {
   display: inline-flex;
-  min-height: 54px;
+  min-height: 50px;
   align-items: center;
   gap: 1.5rem;
-  margin-top: 2.25rem;
   padding: .65rem .75rem .65rem 1.5rem;
   border-radius: 2rem;
   background: #e9b765;
@@ -95,47 +95,58 @@ nextjs-portal {
 }
 .guitar-hero-action span { display: grid; width: 2.2rem; height: 2.2rem; place-items: center; border-radius: 50%; background: #21190914; }
 .guitar-hero-action:hover { background: #f1c782; transform: translateY(-2px); }
-.guitar-stage {
-  position: absolute;
-  inset: -3rem -2rem -3rem 43%;
-  display: grid;
-  place-items: center;
-  perspective: 1200px;
-  transform-style: preserve-3d;
-  pointer-events: none;
-}
-.guitar-object {
-  position: relative;
-  height: min(790px, 92svh);
-  aspect-ratio: 2 / 3;
-  transform: rotateY(-12deg) rotateX(5deg) rotateZ(-7deg) scale(.94);
-  transform-style: preserve-3d;
-}
-.guitar-part { position: absolute; inset: 0; transform-style: preserve-3d; }
-.guitar-part img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.guitar-part-body img { clip-path: inset(45.5% 0 0 0); }
-.guitar-part-neck img { clip-path: inset(17% 0 54.4% 0); }
-.guitar-part-head img { clip-path: inset(0 0 82.9% 0); }
-.guitar-orbit {
-  position: absolute;
-  width: 90%;
-  height: 40%;
-  bottom: 4%;
-  border: 1px solid rgb(233 183 101 / .1);
-  border-radius: 50%;
-  transform: rotateX(74deg) rotateZ(-20deg);
-}
-.guitar-scroll-cue {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  min-height: 44px;
-  bottom: .75rem;
-  font-size: .7rem;
-  color: #8f8c86;
-}
+.guitar-stage { position: relative; display: grid; place-items: center; min-width: 0; pointer-events: none; }
+.guitar-object { position: relative; width: min(100%, 420px); aspect-ratio: 2 / 3; transform-origin: center; }
+.guitar-object img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.guitar-anatomy { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem 4rem; }
+.guitar-anatomy-chapter h2 { font-size: clamp(1.5rem, 3vw, 2.7rem); font-weight: 500; line-height: 1.1; letter-spacing: -.045em; color: #d6b989; margin-bottom: 1.75rem; }
+.guitar-anatomy-chapter dl { display: grid; gap: 1rem; }
+.guitar-anatomy-chapter dt { font-size: 1rem; font-weight: 600; color: #ede7db; }
+.guitar-anatomy-chapter dd { max-width: 28rem; margin-left: 2.65rem; font-size: .875rem; line-height: 1.5; color: #bbb5aa; }
+.guitar-label-hint { margin: -.75rem 0 1rem; font-size: .75rem; line-height: 1.5; color: #aaa59a; }
+.guitar-part-label { display: inline-flex; align-items: center; gap: .75rem; min-height: 44px; text-align: left; }
+button.guitar-part-label { cursor: pointer; }
+.guitar-part-number { display: inline-grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border: 1px solid #a58a61; border-radius: 50%; font-size: .875rem; color: #e9cda1; }
+button.guitar-part-label:hover, .guitar-part-label.is-highlighted { color: #f2cf94; }
+.guitar-part-label.is-highlighted .guitar-part-number { background: #e9b765; color: #211909; }
+.guitar-anatomy-pointers { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+.guitar-anatomy-pointers polyline { fill: none; stroke: #e2c38e; stroke-width: 1.5; }
+.guitar-pointer-dot { fill: #f3d7a8; stroke: #09090b; stroke-width: 1.5; }
+.guitar-marker-badge { fill: #17130e; stroke: #e2c38e; stroke-width: 1.5; }
+.guitar-marker-hit-area { fill: transparent; }
+.guitar-pointer-group.is-current .guitar-marker-control { pointer-events: all; cursor: pointer; user-select: none; }
+.guitar-marker-control:focus-visible { outline: 2px solid #e9b765; outline-offset: 2px; }
+.guitar-anatomy-pointers text { fill: #f3d7a8; font-size: 14px; font-weight: 600; }
+.guitar-pointer-group.has-highlight .guitar-pointer { opacity: .35; }
+.guitar-pointer-group.has-highlight .guitar-pointer.is-highlighted { opacity: 1; }
+.guitar-pointer.is-highlighted polyline { stroke: #ffe4b5; stroke-width: 2.5; }
+.guitar-pointer.is-highlighted .guitar-marker-badge { fill: #e9b765; }
+.guitar-pointer.is-highlighted text { fill: #211909; }
+.guitar-tour-navigation { grid-column: 1 / -1; display: flex; align-items: center; gap: 1.5rem; position: relative; z-index: 2; }
+.guitar-scroll-cue { display: none; font-size: .7rem; color: #aaa59a; }
+.guitar-scroll-cue span { margin-left: .75rem; color: #d6b989; }
 .guitar-hero :is(a, button):focus-visible, .back-to-top:focus-visible { outline: 2px solid #e9b765; outline-offset: 5px; }
+
+/* Enhancement is applied only when motion and viewport space permit the tour. */
+.guitar-hero-animated { height: calc(400svh - 80px); }
+.guitar-hero-animated .guitar-hero-viewport {
+  position: sticky;
+  top: 80px;
+  display: block;
+  height: calc(100svh - 80px);
+  padding: 0;
+  overflow: hidden;
+}
+.guitar-hero-animated .guitar-hero-copy { position: absolute; left: 0; top: 20%; width: 52%; pointer-events: none; }
+.guitar-hero-animated .guitar-stage { position: absolute; left: 43%; right: 0; top: 2%; height: 86%; overflow: hidden; mask-image: linear-gradient(transparent, #000 5%, #000 93%, transparent); }
+.guitar-hero-animated .guitar-object { width: min(100%, calc((86svh - 69px) * 2 / 3)); }
+.guitar-hero-animated .guitar-anatomy { position: absolute; top: 9%; left: 0; width: 37%; display: block; }
+.guitar-hero-animated .guitar-anatomy-chapter { position: absolute; top: 0; width: 100%; opacity: 0; pointer-events: none; }
+.guitar-hero-animated .guitar-anatomy-chapter.is-current { pointer-events: auto; }
+.guitar-hero-animated .guitar-anatomy-pointers { display: block; }
+.guitar-hero-animated .guitar-pointer-group { opacity: 0; }
+.guitar-hero-animated .guitar-tour-navigation { position: absolute; bottom: 1rem; left: 0; right: 0; }
+.guitar-hero-animated .guitar-scroll-cue { display: block; }
 .workspace-footer {
   position: relative;
   z-index: 1;
@@ -153,20 +164,68 @@ nextjs-portal {
 .back-to-top-icon { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 50%; background: #e9b765; color: #211909; transition: transform 250ms cubic-bezier(.22,1,.36,1); }
 .back-to-top:hover .back-to-top-icon { transform: translateY(-4px); }
 @media (max-width: 767px) {
-  .guitar-hero { display: block; min-height: 0; padding: 2.5rem 0 3.5rem; }
-  .guitar-hero-copy { width: 100%; }
+  .guitar-hero-viewport { grid-template-columns: 1fr; gap: 2rem; padding-top: 1.5rem; }
   .guitar-hero h1 { font-size: clamp(2.7rem, 9vw, 4rem); max-width: 34rem; }
   .guitar-hero-copy p { max-width: 23rem; font-size: .875rem; margin-top: 1.25rem; }
-  .guitar-hero-action { margin-top: 1.5rem; }
-  .guitar-stage { position: relative; inset: auto; width: 100%; height: min(530px, 75svh); margin-top: 1rem; }
-  .guitar-object { height: min(560px, 80svh); }
-  .guitar-orbit { bottom: 0; }
+  .guitar-object { width: min(80%, 330px); }
+  .guitar-anatomy { grid-template-columns: 1fr; gap: 2.5rem; }
+  .guitar-tour-navigation { flex-wrap: wrap; gap: .75rem; }
+  .guitar-hero-animated .guitar-hero-copy { top: 2%; width: 100%; }
+  .guitar-hero-animated .guitar-stage { left: 0; right: 0; top: 43%; height: 44%; }
+  .guitar-hero-animated .guitar-object { width: min(80%, calc((44svh - 35px) * 2 / 3)); }
+  .guitar-hero-animated .guitar-anatomy { top: 45%; width: 100%; }
+  .guitar-anatomy-chapter h2 { font-size: 1.5rem; margin-bottom: .85rem; }
+  .guitar-hero-animated .guitar-anatomy-chapter dl { gap: .55rem; }
+  .guitar-hero-animated .guitar-anatomy-chapter dt { font-size: .875rem; }
+  .guitar-hero-animated .guitar-anatomy-chapter dd { font-size: .875rem; line-height: 1.45; max-width: 36rem; }
+  .guitar-label-hint { margin: 0 0 .5rem; }
+  .guitar-hero-animated .guitar-tour-navigation { bottom: .5rem; }
+  .guitar-hero-action { min-height: 44px; font-size: .75rem; padding: .4rem .5rem .4rem 1rem; gap: .75rem; }
+  .guitar-hero-action span { width: 1.8rem; height: 1.8rem; }
+  .guitar-scroll-cue { max-width: 8rem; font-size: .65rem; }
+  .guitar-hero-animated .guitar-scroll-cue { display: none; }
   .guitar-background-portrait { width: 100vw; right: -35%; opacity: .06; }
   .guitar-background-macro { width: 120vw; left: -40%; }
   .workspace-footer { width: calc(100% - 2rem); }
 }
+.chord-setup-grid { display: grid; gap: 1.5rem; align-items: start; }
+.chord-setup-grid > :first-child:empty { display: none; }
+.song-page-actions > * { min-height: 44px; }
+.progression-preset { position: relative; min-width: 0; }
+.progression-preset-description { position: absolute; left: 0; right: 0; top: calc(100% + .5rem); z-index: 20; padding: .75rem; border: 1px solid #706047; border-radius: .75rem; background: #211e19; color: #ede7db; font-size: .75rem; font-weight: 400; line-height: 1.6; text-transform: none; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 150ms ease; }
+.progression-preset:hover, .progression-preset:focus-visible { z-index: 21; }
+.progression-preset:hover .progression-preset-description, .progression-preset:focus-visible .progression-preset-description { opacity: 1; visibility: visible; }
+.learn-next-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 1.5rem; }
+.learning-card { min-width: 0; display: flex; flex-direction: column; padding: 1.5rem; border: 1px solid #ffffff12; border-radius: 1.5rem; background: #171511; }
+.learning-card-heading { display: flex; justify-content: space-between; align-items: center; gap: .75rem; min-height: 1.5rem; }
+.learning-card-label { color: #b9b5ae; font-size: .875rem; font-weight: 500; }
+.learning-barre { border-radius: .3rem; padding: .2rem .4rem; background: #ffffff0a; color: #aaa59a; font-size: .65rem; }
+.learning-card-chord { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
+.learning-card-chord h3 { color: #f0d0a0; font-size: 3.25rem; font-weight: 500; letter-spacing: -.065em; line-height: 1; }
+.learning-card-chord > span { color: #aaa59a; font-size: .8rem; text-align: right; }
+.learning-card-description { margin-block: 1.25rem 1.75rem; color: #aaa59a; font-size: .8rem; line-height: 1.7; overflow-wrap: anywhere; }
+.learning-card-description span { color: #ded9d0; }
+.learning-card-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: auto; padding-top: 1.25rem; border-top: 1px solid #ffffff0d; }
+.learning-shape-button, .learning-add-button { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: .65rem .85rem; border-radius: 2rem; font-size: .75rem; font-weight: 600; transition: background 200ms cubic-bezier(.22,1,.36,1); }
+.learning-shape-button { flex: 1; background: #ffffff0a; color: #d3cdc3; }
+.learning-shape-button:hover { background: #ffffff12; }
+.learning-add-button { flex: 2; background: #e9b765; color: #211909; }
+.learning-add-button:hover { background: #f1c782; }
+.learning-card button:focus-visible { outline: 2px solid #e9b765; outline-offset: 4px; }
+.learning-card-loading { min-height: 19rem; }
+.catalogue-more { display: inline-flex; align-items: center; gap: 1rem; min-height: 48px; margin-top: 1.5rem; padding: .6rem 1.25rem; border: 1px solid #706047; border-radius: 999px; color: #e9cda1; font-size: .875rem; transition: background 200ms cubic-bezier(.22,1,.36,1); }
+.catalogue-more:hover { background: #e9b76512; }
+.catalogue-more:focus-visible, .personal-text-button:focus-visible { outline: 2px solid #e9b765; outline-offset: 4px; }
+@media (min-width: 1024px) {
+  .chord-setup-grid { grid-template-columns: minmax(0, 3fr) minmax(190px, 1fr); }
+  .chord-setup-grid > :first-child { grid-column: 1 / -1; }
+}
+@media (min-width: 1280px) {
+  .chord-setup-grid { grid-template-columns: minmax(260px, 1fr) minmax(0, 1.8fr) minmax(190px, .7fr); }
+  .chord-setup-grid > :first-child { grid-column: auto; }
+  .chord-setup-grid:has(> :first-child:empty) { grid-template-columns: minmax(0, 3fr) minmax(190px, 1fr); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .guitar-object { transform: rotateZ(-7deg); }
   .guitar-background-macro { opacity: .04; }
 }
 
@@ -204,7 +263,7 @@ nextjs-portal {
   align-items: start;
   gap: 1.5rem;
 }
-.personal-feed, .personal-preferences, .personal-history, .personal-next-chord {
+.personal-feed, .personal-preferences, .personal-history {
   min-width: 0;
   padding: 1.5rem;
   border-radius: 1.5rem;
@@ -262,20 +321,18 @@ nextjs-portal {
 .personal-primary:hover { background: #f1c782; transform: translateY(-1px); }
 .personal-primary:active { transform: translateY(0); }
 .personal-button-icon { display: inline-flex; width: 1.65rem; height: 1.65rem; align-items: center; justify-content: center; border-radius: 50%; background: rgb(33 25 9 / .1); }
-.personal-next-chord { background: #171511; }
-.personal-chord-name { color: #f0d0a0; font-size: 4.5rem; font-weight: 500; letter-spacing: -.07em; line-height: 1; }
 .personal-empty { padding: 3rem 0; }
 .personal-data-controls { display: flex; flex-wrap: wrap; gap: 1rem; padding-inline: .5rem; }
 .personal-reset { flex-basis: 100%; padding: 1rem; border-radius: 1rem; font-size: .8rem; color: #d5c9b7; background: #1e1a14; }
 .personal-loading { height: 22rem; border-radius: 1.5rem; background: #141416; }
 .personal-workspace :is(a, button, select):focus-visible, .personal-practice-button:focus-visible { outline: 2px solid #e9b765; outline-offset: 4px; }
 @keyframes personal-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 900px) { .personal-layout { grid-template-columns: minmax(0, 1fr); } .personal-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .personal-layout { grid-template-columns: minmax(0, 1fr); } .personal-side { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 639px) {
   .personal-heading-row { align-items: start; flex-direction: column; gap: 1rem; }
   .personal-workspace { padding-block: .75rem 1.5rem; }
   .personal-side { grid-template-columns: minmax(0, 1fr); }
-  .personal-feed, .personal-preferences, .personal-history, .personal-next-chord { padding: 1.1rem; }
+  .personal-feed, .personal-preferences, .personal-history, .learning-card { padding: 1.1rem; }
   .personal-song-featured { padding: 1.1rem; }
   .personal-select { font-size: 1rem; }
 }
@@ -283,9 +340,28 @@ nextjs-portal {
 /* Touch controls stay usable on phones without disabling browser zoom. */
 @media (max-width: 639px) {
   input, select, textarea { font-size: 16px; }
+  .workspace-page > header :is(a, button) { min-height: 44px; }
+  .workspace-page > header { padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right)); }
+  .song-page-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .song-page-actions > * { min-height: 44px; justify-content: center; width: 100%; }
+  .personal-song-actions { flex-direction: column; align-items: stretch; }
+  .personal-song-actions > a { justify-content: center; }
+  .workspace-footer { padding-bottom: max(3rem, env(safe-area-inset-bottom)); }
 }
 @media (pointer: coarse) {
   button, a[download] { min-height: 44px; min-width: 44px; touch-action: manipulation; }
+  .workspace-page > header a { min-height: 44px; }
+  input, select, textarea { font-size: 16px; }
+}
+@media (max-width: 639px), (hover: none) {
+  .progression-preset > p { display: none; }
+  .progression-preset-description { position: static; padding: 0; margin-top: .35rem; border: 0; background: transparent; color: #b9b5ae; opacity: 1; visibility: visible; pointer-events: auto; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .workspace-page > header :is(a, button) { min-height: 44px; }
+}
+@media (max-width: 374px) {
+  .learning-card-actions { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto !important; }

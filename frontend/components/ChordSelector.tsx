@@ -61,7 +61,7 @@ export function ChordSelector({
                 key={`quick-${chord}`}
                 type="button"
                 onClick={() => { onToggleChord(chord); onInspectChord(chord); }}
-                onMouseEnter={() => onPreviewChord(chord)}
+                onPointerMove={() => onPreviewChord(chord)}
                 onFocus={() => onPreviewChord(chord)}
                 aria-pressed={isSelected}
                 className={`min-h-11 min-w-11 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -93,7 +93,7 @@ export function ChordSelector({
                     key={chord}
                     type="button"
                     onClick={() => { onToggleChord(chord); onInspectChord(chord); }}
-                    onMouseEnter={() => onPreviewChord(chord)}
+                    onPointerMove={() => onPreviewChord(chord)}
                     onFocus={() => onPreviewChord(chord)}
                     aria-pressed={isSelected}
                     className={`min-h-11 min-w-0 py-2 px-1 rounded-xl text-center font-semibold text-xs transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${

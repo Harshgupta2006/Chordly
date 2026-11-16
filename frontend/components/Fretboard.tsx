@@ -71,7 +71,7 @@ export function Fretboard({
   const ariaLabel = `${name} ${is_barre ? "barre " : ""}chord diagram: Low E to high e frets: ${fingering.join(", ")}`;
 
   return (
-    <div className={`flex flex-col items-center select-none ${className}`} suppressHydrationWarning>
+    <div className={`min-w-0 max-w-full flex flex-col items-center select-none ${className}`} suppressHydrationWarning>
       {showTitle && (
         <div className="flex items-center gap-1.5 mb-1.5">
           <span className="font-bold text-zinc-100 tracking-tight text-sm md:text-base">
@@ -91,7 +91,7 @@ export function Fretboard({
         viewBox={`0 0 ${width} ${height}`}
         aria-label={ariaLabel}
         role="img"
-        className="overflow-visible"
+        className="max-w-full h-auto overflow-visible"
         suppressHydrationWarning
         style={
           {

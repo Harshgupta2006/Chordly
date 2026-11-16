@@ -90,7 +90,7 @@ export function SongCard({
         </div>
 
         {/* Title and Artist */}
-        <Link href={`/app/song/${song.id}`} className="block group/link">
+        <Link href={`/app/song/${song.id}`} data-workspace-link={`catalogue-${missingChords.length ? "near" : "playable"}-${song.id}`} className="block group/link">
           <h3 className="font-extrabold text-base text-zinc-100 group-hover/link:text-amber-400 transition-colors break-words line-clamp-2 sm:line-clamp-1">
             {song.title}
           </h3>

@@ -97,6 +97,38 @@ test("blocked storage keeps profile changes available for the tab session", () =
   assert.equal(state.profile.preferences.goal, "learn");
 });
 
+test("removing a practiced song clears its history and preserves preferences and other songs", () => {
+  const values = new Map();
+  const events = [];
+  const window = { localStorage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }, dispatchEvent: event => events.push(event.type) };
+  const storage = load("personalizationStorage", { window });
+  storage.savePreferences({ genres: ["rock"], maxDifficulty: 2, goal: "learn" });
+  storage.recordPractice(1, new Date(Date.now() - 86400000));
+  storage.recordPractice(1);
+  storage.recordPractice(2);
+  storage.removePractice(1);
+  const profile = storage.readProfile().profile;
+  assert.deepEqual(Array.from(profile.history, entry => entry.songId), [2]);
+  assert.equal(profile.preferences.goal, "learn");
+  assert.equal(profile.preferences.genres[0], "rock");
+  assert.equal(events.length, 5);
+  storage.recordPractice(1);
+  assert.ok(storage.readProfile().profile.history.some(entry => entry.songId === 1));
+});
+
+test("undoing today's practice retains earlier practice days", () => {
+  const values = new Map();
+  const window = { localStorage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }, dispatchEvent() {} };
+  const storage = load("personalizationStorage", { window });
+  const yesterday = new Date(Date.now() - 86400000);
+  storage.recordPractice(1, yesterday);
+  storage.recordPractice(1);
+  storage.removePractice(1, storage.localDay(Date.now()));
+  const history = storage.readProfile().profile.history;
+  assert.equal(history.length, 1);
+  assert.equal(storage.localDay(history[0].practicedAt), storage.localDay(yesterday));
+});
+
 test("the public feature artifact covers the catalogue with finite normalized vectors", () => {
   const artifact = JSON.parse(fs.readFileSync(new URL("../data/recommendationFeatures.json", import.meta.url)));
   const catalogue = JSON.parse(fs.readFileSync(new URL("../data/songs.json", import.meta.url)));

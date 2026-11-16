@@ -95,6 +95,19 @@ export function toggleFavoriteSong(songId: number): UserPracticeList {
   return updated;
 }
 
+export function sanitizeFilters(value: unknown): MatchFilters {
+  if (!value || typeof value !== "object") return DEFAULT_FILTERS;
+  const parsed = value as Record<string, unknown>;
+  return {
+    q: typeof parsed.q === "string" ? parsed.q : undefined,
+    genre: typeof parsed.genre === "string" ? parsed.genre : undefined,
+    difficulty: typeof parsed.difficulty === "number" ? parsed.difficulty : undefined,
+    difficulty_max: typeof parsed.difficulty_max === "number" ? parsed.difficulty_max : undefined,
+    max_missing: typeof parsed.max_missing === "number" ? parsed.max_missing : 2,
+    sort: parsed.sort === "easiest" ? "easiest" : "best",
+  };
+}
+
 export function getStoredFilters(): MatchFilters {
   if (typeof window === "undefined") {
     return DEFAULT_FILTERS;
@@ -106,19 +119,7 @@ export function getStoredFilters(): MatchFilters {
       return DEFAULT_FILTERS;
     }
 
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") {
-      return DEFAULT_FILTERS;
-    }
-
-    return {
-      q: typeof parsed.q === "string" ? parsed.q : undefined,
-      genre: typeof parsed.genre === "string" ? parsed.genre : undefined,
-      difficulty: typeof parsed.difficulty === "number" ? parsed.difficulty : undefined,
-      difficulty_max: typeof parsed.difficulty_max === "number" ? parsed.difficulty_max : undefined,
-      max_missing: typeof parsed.max_missing === "number" ? parsed.max_missing : 2,
-      sort: parsed.sort === "easiest" ? "easiest" : "best",
-    };
+    return sanitizeFilters(JSON.parse(raw));
   } catch (error) {
     console.warn("Failed to parse localStorage filters.", error);
     return DEFAULT_FILTERS;

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { api } from "@/lib/api";
 import {
   getStoredFilters,
@@ -14,13 +13,23 @@ import { MatchFilters, MatchResult, NextChordRecommendation, Song } from "@/lib/
 import { ChordSelector } from "@/components/ChordSelector";
 import { FilterBar } from "@/components/FilterBar";
 import { Fretboard } from "@/components/Fretboard";
-import { LearnNextPanel } from "@/components/LearnNextPanel";
 import { ProgressionPresets } from "@/components/ProgressionPresets";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import ChordlyLogo from "@/components/ChordlyLogo";
 import { ChordRecognition } from "@/components/ChordRecognition";
 import { PersonalizedWorkspace } from "@/components/PersonalizedWorkspace";
 import { GuitarBackdrop, GuitarScrollHero, WorkspaceFooter } from "@/components/GuitarScrollScene";
+import { WorkspaceHomeLink } from "@/components/WorkspaceLinks";
+import { matchSongs } from "@/lib/matchingEngine";
+import {
+  clearWorkspaceVisit,
+  isSongPath,
+  jumpToWorkspaceSection,
+  readWorkspaceVisit,
+  rememberWorkspaceVisit,
+  workspaceRestoreY,
+  WorkspaceVisit,
+} from "@/lib/workspaceNavigation";
 
 // Available genres in Chordly catalogue
 const GENRES = ["country", "hiphop", "pop", "rnb", "rock"];
@@ -78,6 +87,7 @@ export default function WorkspacePage() {
   // Favorites state (safe client-side only)
   const [favorites, setFavorites] = useState<number[]>([]);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(false);
+  const [resumeVisit, setResumeVisit] = useState<WorkspaceVisit | null>(null);
 
   // Debounce timer ref
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -85,17 +95,55 @@ export default function WorkspacePage() {
   // Load localStorage after mount (guarantees zero hydration errors)
   useEffect(() => {
     const list = getStoredPracticeList();
+    const startingAtTop = window.location.hash === "#chordly-workspace";
+    const visit = startingAtTop ? null : readWorkspaceVisit();
+    if (startingAtTop) clearWorkspaceVisit();
     setFavorites(list.favorites);
-    if (list.learnedChords && Array.isArray(list.learnedChords)) {
-      setSelectedChords(list.learnedChords);
-      if (list.learnedChords.length > 0) {
-        setPreviewChord(list.learnedChords[0]);
-      }
-    }
-    const storedFilters = getStoredFilters();
-    setFilters(storedFilters);
+    setSelectedChords(visit?.selectedChords ?? list.learnedChords);
+    setPreviewChord(visit ? visit.previewChord : list.learnedChords[0] ?? null);
+    setFilters(visit?.filters ?? getStoredFilters());
+    setShowOnlyFavorites(visit?.favoritesOnly ?? false);
+    setResumeVisit(visit);
     setIsLoaded(true);
+    if (startingAtTop) window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
+
+  useEffect(() => {
+    if (!resumeVisit) return;
+    const cancelRestore = () => setResumeVisit(null);
+    const events = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
+    events.forEach(event => window.addEventListener(event, cancelRestore, { passive: true }));
+    return () => events.forEach(event => window.removeEventListener(event, cancelRestore));
+  }, [resumeVisit]);
+
+  useEffect(() => {
+    if (!resumeVisit || !isLoaded || loadingMatches || loadingRecs || (!matchResult && !apiError)) return;
+    const root = document.getElementById("chordly-workspace")!;
+    let firstFrame = 0, secondFrame = 0;
+    const restore = () => {
+      if (root.querySelector('#your-session[aria-busy="true"]')) return;
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => {
+          const anchor = resumeVisit.anchor
+            ? root.querySelector<HTMLAnchorElement>(`[data-workspace-link="${resumeVisit.anchor.key}"]`) : null;
+          const top = workspaceRestoreY(resumeVisit, anchor?.getBoundingClientRect().top ?? null, window.scrollY);
+          window.scrollTo({ top, behavior: "instant" });
+          anchor?.focus({ preventScroll: true });
+          setResumeVisit(null);
+        });
+      });
+    };
+    const observer = new ResizeObserver(restore);
+    observer.observe(root);
+    restore();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, [resumeVisit, isLoaded, loadingMatches, loadingRecs, matchResult, apiError]);
 
   // Save selected chords to localStorage whenever they change after mount
   useEffect(() => {
@@ -186,6 +234,16 @@ export default function WorkspacePage() {
     setInspectorOpen(true);
   };
 
+  const handleInspectChord = (chord: string) => {
+    setPreviewChord(chord);
+    if (window.innerWidth < 1024) {
+      setInspectorOpen(true);
+      return;
+    }
+    setInspectorOpen(false);
+    jumpToWorkspaceSection("your-chords", "chord-inspector");
+  };
+
   // Toggle favorite
   const handleToggleFavorite = (songId: number) => {
     const updated = toggleFavoriteSong(songId);
@@ -194,43 +252,49 @@ export default function WorkspacePage() {
 
   // Filtered results for favorites tab if active
   const displayedResults: MatchResult | null = useMemo(() => {
-    if (!matchResult) return null;
     if (!showOnlyFavorites) return matchResult;
+    return matchSongs(selectedChords, filters, { songIds: favorites, includeAllMissing: true });
+  }, [matchResult, showOnlyFavorites, favorites, selectedChords, filters]);
 
-    const favSet = new Set(favorites);
-    const favPlayable = matchResult.playable.filter((s) => favSet.has(s.id));
-    const favNear = matchResult.near.filter((n) => favSet.has(n.song.id));
-
-    return {
-      playable: favPlayable,
-      near: favNear,
-      total_playable: favPlayable.length,
-      total_near: favNear.length,
-    };
-  }, [matchResult, showOnlyFavorites, favorites]);
+  function rememberSongOrigin(event: React.MouseEvent<HTMLDivElement>) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const anchor = (event.target as Element).closest<HTMLAnchorElement>("a[href]");
+    if (!anchor) return;
+    const url = new URL(anchor.href);
+    if (url.origin !== window.location.origin || !isSongPath(url.pathname)) return;
+    rememberWorkspaceVisit({
+      version: 1, selectedChords, filters, favoritesOnly: showOnlyFavorites, previewChord,
+      scrollY: window.scrollY,
+      playableLimit: Math.max(6, document.getElementById("playable-song-results")?.children.length ?? 0),
+      nearLimit: Math.max(3, document.getElementById("near-song-results")?.children.length ?? 0),
+      anchor: anchor.dataset.workspaceLink ? { key: anchor.dataset.workspaceLink, top: anchor.getBoundingClientRect().top } : null,
+    }, url.pathname);
+  }
 
   return (
-    <div id="chordly-workspace" className="workspace-page min-h-screen text-zinc-100 flex flex-col">
+    <div id="chordly-workspace" className="workspace-page min-h-screen text-zinc-100 flex flex-col" onClickCapture={rememberSongOrigin}>
       <GuitarBackdrop />
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/app" className="flex items-center gap-2.5 group">
+          <WorkspaceHomeLink className="flex items-center gap-2.5 group">
             <ChordlyLogo size={36} />
             <span className="font-black text-xl tracking-tight text-zinc-100 group-hover:text-amber-400 transition-colors">
               Chordly
             </span>
-          </Link>
-          <span className="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400">
-            Discovery Workspace
-          </span>
+          </WorkspaceHomeLink>
         </div>
 
         <div className="flex items-center gap-2.5">
           {/* Favorites toggle tab */}
           <button
             type="button"
-            onClick={() => setShowOnlyFavorites((prev) => !prev)}
+            aria-label={`Favorites (${favorites.length})`}
+            aria-pressed={showOnlyFavorites}
+            onClick={() => {
+              setShowOnlyFavorites(current => !current);
+              jumpToWorkspaceSection("song-catalogue", "catalogue-heading");
+            }}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
               showOnlyFavorites
                 ? "bg-rose-500/10 text-rose-400 border-rose-500/30 ring-1 ring-rose-500/20"
@@ -244,7 +308,7 @@ export default function WorkspacePage() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
-            <span><span className="hidden sm:inline">Favorites </span>({favorites.length})</span>
+            <span>Favorites ({favorites.length})</span>
           </button>
         </div>
       </header>
@@ -271,101 +335,89 @@ export default function WorkspacePage() {
 
         <GuitarScrollHero />
 
-        <PersonalizedWorkspace
-          knownChords={selectedChords}
-          favorites={favorites}
-          onFavorite={handleToggleFavorite}
-          onAddChord={handleAddChord}
-        />
-
-        {/* Top Split: Chord Selector & Fretboard Preview Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          {/* Chord Selection Grid (3 cols on desktop) */}
-          <div className="min-w-0 lg:col-span-3 space-y-6">
-            {(process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true") && (
-              <ChordRecognition onConfirm={handleAddChord} />
-            )}
-            <ChordSelector
-              selectedChords={selectedChords}
-              onToggleChord={handleToggleChord}
-              onClearAll={handleClearAll}
-              onSelectChords={setSelectedChords}
-              previewChord={previewChord}
-              onPreviewChord={setPreviewChord}
-              onInspectChord={(chord) => {
-                setPreviewChord(chord);
-                if (window.innerWidth < 1024) setInspectorOpen(true);
-              }}
-            />
-
-            {/* Mobile hint: tap a chord to inspect */}
-            <p className="lg:hidden text-xs text-zinc-500 text-center -mt-2">
-              Tap any chord above to see its fingering
-            </p>
-
-            <ProgressionPresets
-              onSelectPreset={handleSelectPreset}
-              selectedChords={selectedChords}
-            />
+        <section id="your-chords" className="chord-setup scroll-mt-24" aria-labelledby="chord-setup-heading">
+          <div className="mb-6">
+            <h2 id="chord-setup-heading" className="personal-heading">Your chords.</h2>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">Record a strum or choose the chords you know to find something to play.</p>
           </div>
+          <div className="chord-setup-grid">
+            <div className="min-w-0">
+              {(process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true") && (
+                <ChordRecognition onConfirm={handleAddChord} />
+              )}
+            </div>
+            <div className="min-w-0 space-y-6">
+              <ChordSelector
+                selectedChords={selectedChords}
+                onToggleChord={handleToggleChord}
+                onClearAll={handleClearAll}
+                onSelectChords={setSelectedChords}
+                previewChord={previewChord}
+                onPreviewChord={setPreviewChord}
+                onInspectChord={(chord) => {
+                  setPreviewChord(chord);
+                  if (window.innerWidth < 1024) setInspectorOpen(true);
+                }}
+              />
 
-          {/* Right Column: Chord Diagram Viewer — desktop only */}
-          <div className="hidden lg:flex lg:col-span-1 sticky top-20 bg-zinc-900/80 rounded-2xl border border-zinc-800 p-5 shadow-xl flex-col items-center">
-            <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                Chord Inspector
-              </span>
-              <span className="text-[10px] text-zinc-400">Tap any chord</span>
+              {/* Mobile hint: tap a chord to inspect */}
+              <p className="lg:hidden text-xs text-zinc-500 text-center -mt-2">
+                Tap any chord above to see its fingering
+              </p>
+
+              <ProgressionPresets
+                onSelectPreset={handleSelectPreset}
+                selectedChords={selectedChords}
+              />
             </div>
 
-            {previewChord ? (
-              <div className="py-2 flex flex-col items-center w-full">
-                <Fretboard chordName={previewChord} size="md" />
-                <div className="mt-4 pt-3 border-t border-zinc-800/80 w-full flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleChord(previewChord)}
-                    className={`w-full py-2 px-3 text-xs font-bold rounded-xl transition-all ${
-                      selectedChords.includes(previewChord)
-                        ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        : "bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-md shadow-amber-500/20"
-                    }`}
-                  >
-                    {selectedChords.includes(previewChord) ? "Remove From My Chords" : "Add To My Chords"}
-                  </button>
-                </div>
+            <div id="chord-inspector" role="region" aria-label="Chord inspector" tabIndex={-1}
+              className="hidden lg:flex min-w-0 sticky top-20 bg-zinc-900/80 rounded-2xl border border-zinc-800 p-5 shadow-xl flex-col items-center">
+              <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Chord Inspector
+                </span>
+                <span className="text-[10px] text-zinc-400">Tap any chord</span>
               </div>
-            ) : (
-              <div className="py-12 text-center text-xs text-zinc-400">
-                Select or hover over any chord to see string fingering
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Learn Next Recommendation Banner */}
-        <LearnNextPanel
-          recommendations={recommendations}
-          onAddChord={handleAddChord}
-          onPreviewChord={(chord) => {
-            setPreviewChord(chord);
-            if (chord && window.innerWidth < 1024) setInspectorOpen(true);
-          }}
-          loading={loadingRecs}
-        />
+              {previewChord ? (
+                <div className="py-2 flex flex-col items-center w-full">
+                  <Fretboard chordName={previewChord} size="md" />
+                  <div className="mt-4 pt-3 border-t border-zinc-800/80 w-full flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleChord(previewChord)}
+                      className={`w-full py-2 px-3 text-xs font-bold rounded-xl transition-all ${
+                        selectedChords.includes(previewChord)
+                          ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                          : "bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-md shadow-amber-500/20"
+                      }`}
+                    >
+                      {selectedChords.includes(previewChord) ? "Remove From My Chords" : "Add To My Chords"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-xs text-zinc-400">
+                  Select or hover over any chord to see string fingering
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Search and Filters Bar */}
-        <div id="song-catalogue" className="scroll-mt-24 space-y-4">
+        <section id="song-catalogue" className="scroll-mt-24 space-y-6" aria-labelledby="catalogue-heading">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black text-zinc-100 tracking-tight">
-              Matching Songs Catalogue
+            <h2 id="catalogue-heading" tabIndex={-1} className="text-lg font-black text-zinc-100 tracking-tight">
+              {showOnlyFavorites ? "Your favorite songs" : "Matching Songs Catalogue"}
             </h2>
             {showOnlyFavorites && (
               <button
                 onClick={() => setShowOnlyFavorites(false)}
                 className="text-xs text-amber-400 hover:underline"
               >
-                Clear favorites filter
+                Browse all matches
               </button>
             )}
           </div>
@@ -375,19 +427,28 @@ export default function WorkspacePage() {
             onChangeFilters={setFilters}
             genres={GENRES}
           />
-        </div>
+          <ResultsPanel
+            key={JSON.stringify([isLoaded, [...selectedChords].sort(), filters, showOnlyFavorites])}
+            initialPlayableLimit={resumeVisit?.playableLimit}
+            initialNearLimit={resumeVisit?.nearLimit}
+            favoritesView={showOnlyFavorites}
+            results={displayedResults}
+            loading={loadingMatches}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            onSelectChordPreview={handleInspectChord}
+            searchFilter={filters.q}
+          />
+        </section>
 
-        {/* Results Sections: Playable & Near Matches */}
-        <ResultsPanel
-          results={displayedResults}
-          loading={loadingMatches}
+        <PersonalizedWorkspace
+          knownChords={selectedChords}
           favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-          onSelectChordPreview={(chord) => {
-            setPreviewChord(chord);
-            if (window.innerWidth < 1024) setInspectorOpen(true);
-          }}
-          searchFilter={filters.q}
+          onFavorite={handleToggleFavorite}
+          onAddChord={handleAddChord}
+          learningRecommendations={recommendations}
+          learningLoading={loadingRecs}
+          onPreviewChord={handleInspectChord}
         />
       </main>
       <WorkspaceFooter />
