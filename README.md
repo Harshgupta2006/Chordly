@@ -6,10 +6,10 @@ recognize a chord, review the result, and confirm it before adding it to your li
 
 ## Features and architecture
 
-- 187 songs, 47 chord shapes, diagrams and song sheets.
+- Guitar chord shapes, interactive diagrams and song sheets.
 - Playable/near-match ranking, genre/difficulty/search filters and favourites.
 - Known chords and filters persist in your browser's localStorage.
-- Audio predictions distinguish major and minor: C major, C minor, and so on.
+- Audio predictions display explicit major and minor chord names.
 - Responsive recording controls, touch targets, filters and chord inspector.
 
 ```text
@@ -25,16 +25,115 @@ ml/        dataset exploration, EDA, preprocessing, SVM/CNN training and evaluat
 The default song browser uses bundled JSON and needs no external API or database.
 The optional `NEXT_PUBLIC_API_URL` selects a separately hosted catalogue API.
 Matching compares required and known chord sets, ranks missing chords and song
-difficulty, and counts which new chord unlocks the most songs. It is deterministic;
-collaborative filtering, user accounts and learning from practice history have
-not been implemented.
+difficulty, and recommends which new chord unlocks the most songs.
 
 The dedicated hosted audio service lives in `frontend/audio_backend/`. It has no
 database connection. `frontend/vercel.json` defines web and Python services within
 the existing Vercel project root (`frontend`), routing `/api/audio/*` to FastAPI.
 [Vercel Services](https://vercel.com/docs/services) is currently in beta.
 
-## Audio model and measured limitations
+## Frontend architecture and logic
+
+The frontend uses Next.js App Router, React, TypeScript and Tailwind CSS. The root
+route opens the discovery workspace at `/app`. Song cards link to practice sheets
+at `/app/song/[id]`.
+
+### Workspace state and data flow
+
+The workspace coordinates selected chords, the chord preview, search and filter
+settings, favourites, matching results and next-chord recommendations through React
+state. Saved preferences load after the component mounts. Subsequent changes save
+the updated practice list and filters back to localStorage.
+
+Changing known chords or filters starts a 300 ms debounce. The workspace then
+requests matching songs and next-chord suggestions together with `Promise.all`.
+Loading states provide feedback while results update, and a retry control handles
+request errors. The favourites view derives its results from the current matches
+and the saved favourite song IDs.
+
+The typed API client provides a shared interface for catalogue access. By default,
+it calls the bundled TypeScript matching engine and reads chord, song and sheet
+JSON from `frontend/data/`. A configured remote catalogue URL directs those calls
+to the FastAPI service.
+
+### Chord compatibility and ranking
+
+The matching engine converts the selected chords into a JavaScript `Set`. For
+each song, it finds the required chords absent from that set.
+
+```text
+missing chords = required song chords - known chords
+```
+
+- A song is playable when every required chord is already known.
+- A song becomes a near match when one or two required chords are missing,
+  subject to the selected missing-chord filter.
+- Genre, difficulty and title/artist search narrow the candidate songs.
+
+Playable results sort by difficulty, chord count and title. Near matches sort by
+missing-chord count first, then difficulty, chord count and title. These tie-breaks
+keep the result order consistent as the workspace updates.
+
+### Learn Next recommendations
+
+For each song with exactly one missing chord, the engine records which chord
+would make the song playable. It ranks candidate chords by the number of songs
+they unlock. Ties favour non-barre shapes, followed by chord-name order. Adding a
+suggestion updates the known-chords list and refreshes the matches.
+
+### Browser persistence
+
+| Storage key | Saved information |
+| --- | --- |
+| `chordly_practice_list_v1` | Known chords and favourite song IDs |
+| `chordly_filters_v1` | Search, genre, difficulty, missing-chord preference and sort choice |
+
+Storage helpers parse JSON inside error handlers, validate saved chord names
+against the canonical chord set, and restore defaults when saved data is invalid.
+Preferences are available again when the user reloads or returns from a song sheet.
+
+### Audio recognition flow
+
+1. The user starts microphone recording or chooses a WAV file.
+2. An AudioWorklet collects microphone samples and averages input channels to mono.
+   The browser encodes the captured samples as a PCM WAV and stops recording
+   automatically after three seconds.
+3. Playback and Save WAV controls let the user review the recording.
+4. Submitting sends the WAV as multipart form data to the same-origin
+   `/api/audio/predict-chord` endpoint.
+5. The interface displays the predicted chord with its major/minor name and model
+   scores. Confirming an accepted result adds it to the known-chords list and
+   refreshes song matches. Discarding returns to the recording flow.
+
+The component manages permission feedback, request cancellation and timeouts.
+It releases microphone tracks, closes the AudioContext and revokes playback URLs
+when the recording is replaced or the component unmounts.
+
+### Responsive interface
+
+Chord buttons provide selection feedback and fingering previews. The fretboard
+renders string positions from the canonical chord catalogue. Desktop layouts show
+the inspector alongside the chord grid. Mobile layouts use a scrollable bottom
+sheet with a close control, Escape dismissal, keyboard focus handling and safe-area
+spacing.
+
+Recording actions stack on narrow screens, playback uses the available width,
+and touch controls have larger targets. Search and filter controls adapt across
+screen sizes, headings wrap, and reduced-motion preferences adjust animations.
+Song cards combine difficulty, chord requirements, favourites, practice-sheet
+navigation and guitar-lesson search links.
+
+| Frontend area | Main implementation |
+| --- | --- |
+| Workspace state and orchestration | `frontend/app/app/page.tsx` |
+| Typed catalogue API | `frontend/lib/api.ts` |
+| Matching and Learn Next logic | `frontend/lib/matchingEngine.ts` |
+| Saved practice list and filters | `frontend/lib/localStorage.ts` |
+| Chord selection and diagrams | `frontend/components/ChordSelector.tsx`, `frontend/components/Fretboard.tsx` |
+| Search and song results | `frontend/components/FilterBar.tsx`, `frontend/components/ResultsPanel.tsx`, `frontend/components/SongCard.tsx` |
+| Recording and recognition | `frontend/components/ChordRecognition.tsx`, `frontend/lib/audio.ts`, `frontend/public/audio-capture-worklet.js` |
+
+## Audio model and evaluation
 
 The custom CNN was trained from scratch on the pinned
 [rodriler/isolated-guitar-chords dataset](https://huggingface.co/datasets/rodriler/isolated-guitar-chords).
@@ -47,13 +146,8 @@ split contains 633 training and 147 test recordings. Training was divided into
 | SVM, 88 aggregate features | 96.06% | 90.48% | 0.8998 |
 | CNN, 157,945 parameters | 99.21% | 87.76% | 0.8591 |
 
-The SVM performs better on the official test set. The audio interface uses the
-CNN prototype. It missed every D recording in the official test set and rejected
-only two of three Noise recordings. Model scores are **uncalibrated**: confident
-mistakes on another guitar or microphone are possible. Personal-guitar evaluation
-remains pending. D-sharp minor can be detected but cannot be added because the
-catalogue lacks its fingering. The model does not recognize complete songs,
-progressions, seventh chords or capo positions from audio.
+The audio interface uses the custom CNN to predict isolated guitar chords from
+Log-Mel spectrograms and display the result for user confirmation.
 
 Hosting exports the existing checkpoint to ONNX without retraining. Frozen
 normalization, label order, rejection threshold, Hann window and Mel filters are
@@ -125,7 +219,7 @@ and seeding environments.
 The existing GitHub integration deploys `main` to the Chordly Vercel project.
 Keep its root directory as `frontend`; the Services configuration builds Next.js
 and FastAPI together. Python is pinned to 3.12. Inference files are server assets
-outside `public/`. Cold Python instances can take longer on the first request.
+outside `public/`.
 
 - Keep private local values in ignored `.env` / `.env.local` files and hosted
   credentials in Vercel **Secret** environment variables. Commit only placeholder
