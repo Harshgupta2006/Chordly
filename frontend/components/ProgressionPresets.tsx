@@ -15,7 +15,7 @@ export function ProgressionPresets({
   const selectedSet = new Set(selectedChords);
 
   return (
-    <div className="bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-zinc-800/80 p-5 shadow-lg">
+    <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-5 shadow-lg">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-300">
           Progression Presets

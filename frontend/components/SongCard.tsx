@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Song } from "../lib/types";
+import { PracticeButton } from "./PracticeButton";
 
 interface SongCardProps {
   song: Song;
@@ -43,7 +44,7 @@ export function SongCard({
   };
 
   return (
-    <div className="group relative min-w-0 bg-zinc-900/70 backdrop-blur-md rounded-2xl border border-zinc-800/80 p-4 hover:border-zinc-700/80 hover:shadow-xl hover:shadow-black/40 transition-all flex flex-col justify-between">
+    <div className="group relative min-w-0 bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 hover:border-zinc-700/80 hover:shadow-xl hover:shadow-black/40 transition-all flex flex-col justify-between">
       {/* Top row: Genre, Difficulty, Capo, Favorite */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -143,6 +144,7 @@ export function SongCard({
           </svg>
           Learn This Song
         </a>
+        <div className="mt-3 flex justify-center"><PracticeButton songId={song.id} /></div>
       </div>
     </div>
   );

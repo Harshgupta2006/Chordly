@@ -26,6 +26,7 @@ build/
 id_rsa*
 id_ed25519*
 credentials.json
+chordly-profile*.json
 service-account*.json
 *-service-account.json
 *.tfstate*

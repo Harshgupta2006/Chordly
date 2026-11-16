@@ -18,7 +18,7 @@ export function LearnNextPanel({
 }: LearnNextPanelProps) {
   if (loading) {
     return (
-      <div className="bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-zinc-800/80 p-5 shadow-lg animate-pulse">
+      <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-5 shadow-lg animate-pulse">
         <div className="h-4 bg-zinc-800 rounded w-1/3 mb-4"></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="h-28 bg-zinc-800/50 rounded-xl"></div>
@@ -34,7 +34,7 @@ export function LearnNextPanel({
   }
 
   return (
-    <div className="bg-gradient-to-br from-amber-500/10 via-zinc-900/80 to-zinc-900/90 backdrop-blur-md rounded-2xl border border-amber-500/20 p-5 shadow-xl">
+    <div className="bg-gradient-to-br from-amber-500/10 via-zinc-900/80 to-zinc-900/90 rounded-2xl border border-amber-500/20 p-5 shadow-xl">
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">

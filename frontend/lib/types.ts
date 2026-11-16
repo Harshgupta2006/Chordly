@@ -55,6 +55,32 @@ export interface UserPracticeList {
   learnedChords: string[]; // List of canonical chord names
 }
 
+export interface PersonalPreferences {
+  genres: string[];
+  maxDifficulty: number;
+  goal: "play" | "learn";
+}
+
+export interface PracticeEntry {
+  songId: number;
+  practicedAt: string;
+}
+
+export interface PersonalProfile {
+  version: 1;
+  onboarded: boolean;
+  preferences: PersonalPreferences;
+  history: PracticeEntry[];
+  dismissedSongIds: number[];
+}
+
+export interface PersonalizedSong {
+  song: Song;
+  score: number;
+  missing: string[];
+  reasons: string[];
+}
+
 export interface SongSheetPart {
   part: string; // e.g. "verse 1", "chorus", "bridge"
   chords: string[]; // ordered chord changes in this section

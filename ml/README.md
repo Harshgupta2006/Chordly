@@ -107,7 +107,34 @@ public training manifest, then run:
 
 This never trains on personal recordings and refuses to overwrite initial results.
 
-## Goal
+## Personalized recommendation features
+
+The browser recommendation engine uses public catalogue vectors prepared with
+Pandas, NumPy and Scikit-learn. Chords use TF-IDF features, alongside genre,
+artist and difficulty encodings. The generated vectors are normalized for cosine
+similarity and bundled into the frontend. Personal preferences, favourites and
+practice history are used for ranking on the user's device.
+
+The initial ranking weights are 0.45 for chord fit, 0.30 for content similarity,
+0.15 for preferred genre and 0.10 for difficulty fit. Recent practice applies a
+0.15 discovery penalty. Favourites and time-decayed practice form the preference
+vector. These defaults can be assessed using the chronological evaluation below.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/scripts/build_recommendation_features.py
+.\ml\.venv\Scripts\python.exe ml/scripts/evaluate_recommendations.py path/to/practice-history.json
+```
+
+Use a local fixture containing the versioned `profile` and `practiceList` objects
+under ignored `ml/data/`. Evaluation uses the actual
+TypeScript ranking engine, so Node.js and the frontend's installed dependencies
+are required. Each qualifying profile is split chronologically, and the report
+compares Precision@5, Recall@5 and NDCG@5 against chord-only matching before the
+UI's artist-diversity selection. The report records its assumptions. An empty or
+short history produces an insufficient-history result with no measured metrics.
+Personal practice-history files should be kept under ignored `ml/data/`.
+
+## Audio recognition goal
 
 A user plays a single guitar chord on their microphone. The system predicts
 which chord is being played and optionally adds it to their known-chords list,

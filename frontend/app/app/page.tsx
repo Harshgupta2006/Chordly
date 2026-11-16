@@ -19,6 +19,8 @@ import { ProgressionPresets } from "@/components/ProgressionPresets";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import ChordlyLogo from "@/components/ChordlyLogo";
 import { ChordRecognition } from "@/components/ChordRecognition";
+import { PersonalizedWorkspace } from "@/components/PersonalizedWorkspace";
+import { GuitarBackdrop, GuitarScrollHero, WorkspaceFooter } from "@/components/GuitarScrollScene";
 
 // Available genres in Chordly catalogue
 const GENRES = ["country", "hiphop", "pop", "rnb", "rock"];
@@ -208,7 +210,8 @@ export default function WorkspacePage() {
   }, [matchResult, showOnlyFavorites, favorites]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+    <div id="chordly-workspace" className="workspace-page min-h-screen text-zinc-100 flex flex-col">
+      <GuitarBackdrop />
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -247,7 +250,7 @@ export default function WorkspacePage() {
       </header>
 
       {/* Main Workspace Grid */}
-      <main className="min-w-0 flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <main className="workspace-content min-w-0 flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* API Error Alert if backend is offline */}
         {apiError && (
           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center justify-between">
@@ -265,6 +268,15 @@ export default function WorkspacePage() {
             </button>
           </div>
         )}
+
+        <GuitarScrollHero />
+
+        <PersonalizedWorkspace
+          knownChords={selectedChords}
+          favorites={favorites}
+          onFavorite={handleToggleFavorite}
+          onAddChord={handleAddChord}
+        />
 
         {/* Top Split: Chord Selector & Fretboard Preview Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
@@ -298,7 +310,7 @@ export default function WorkspacePage() {
           </div>
 
           {/* Right Column: Chord Diagram Viewer — desktop only */}
-          <div className="hidden lg:flex lg:col-span-1 sticky top-20 bg-zinc-900/80 backdrop-blur-md rounded-2xl border border-zinc-800 p-5 shadow-xl flex-col items-center">
+          <div className="hidden lg:flex lg:col-span-1 sticky top-20 bg-zinc-900/80 rounded-2xl border border-zinc-800 p-5 shadow-xl flex-col items-center">
             <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                 Chord Inspector
@@ -343,7 +355,7 @@ export default function WorkspacePage() {
         />
 
         {/* Search and Filters Bar */}
-        <div className="space-y-4">
+        <div id="song-catalogue" className="scroll-mt-24 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-black text-zinc-100 tracking-tight">
               Matching Songs Catalogue
@@ -378,6 +390,7 @@ export default function WorkspacePage() {
           searchFilter={filters.q}
         />
       </main>
+      <WorkspaceFooter />
 
       {/* ── Mobile Chord Inspector Bottom Sheet ── */}
       {/* Backdrop */}

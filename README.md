@@ -11,6 +11,7 @@ recognize a chord, review the result, and confirm it before adding it to your li
 - Known chords and filters persist in your browser's localStorage.
 - Audio predictions display explicit major and minor chord names.
 - Responsive recording controls, touch targets, filters and chord inspector.
+- A personalized For You feed, genre preferences and device-local practice history.
 
 ```text
 Browser -> Next.js / React / TypeScript
@@ -87,10 +88,39 @@ suggestion updates the known-chords list and refreshes the matches.
 | --- | --- |
 | `chordly_practice_list_v1` | Known chords and favourite song IDs |
 | `chordly_filters_v1` | Search, genre, difficulty, missing-chord preference and sort choice |
+| `chordly_personalization_v1` | Genre and practice preferences, practice history and hidden recommendations |
 
 Storage helpers parse JSON inside error handlers, validate saved chord names
 against the canonical chord set, and restore defaults when saved data is invalid.
 Preferences are available again when the user reloads or returns from a song sheet.
+
+### Personalized music discovery
+
+The For You feed combines chord compatibility with content similarity and individual
+preferences. A Python pipeline uses Pandas, NumPy and Scikit-learn to encode chord
+sets, genres, artists and difficulty. TF-IDF weights chord features, and normalized
+song vectors support cosine-similarity ranking in the browser.
+
+Favourites and explicitly recorded practice build a preference vector. Recent
+practice receives more weight, while songs practised in the last few days receive
+a discovery penalty. Genre choices, practice level and a focus on familiar or new
+chords shape the results. Each suggestion explains its connection to the user's
+chords or interests. A personalized next-chord suggestion highlights a shape that
+opens relevant songs.
+
+Users can mark practice from recommendations, catalogue cards and song sheets.
+The history records each song once per local day. Profile preferences and history
+stay in localStorage on the device. Reset controls are available under
+Your preferences, and the existing saved chords and favourites carry forward.
+
+The offline evaluation command reads local practice-history fixtures and compares the same
+browser ranking engine with the chord-matching baseline. It measures Precision@5,
+Recall@5 and NDCG@5 using chronological practice-history splits. Personal history files belong in ignored `ml/data/`.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/scripts/build_recommendation_features.py
+.\ml\.venv\Scripts\python.exe ml/scripts/evaluate_recommendations.py path/to/practice-history.json
+```
 
 ### Audio recognition flow
 
@@ -122,6 +152,12 @@ and touch controls have larger targets. Search and filter controls adapt across
 screen sizes, headings wrap, and reduced-motion preferences adjust animations.
 Song cards combine difficulty, chord requirements, favourites, practice-sheet
 navigation and guitar-lesson search links.
+
+The opening guitar scene uses layered artwork, CSS perspective and GSAP
+ScrollTrigger to rotate and separate the instrument as the page scrolls. Ambient
+body and fretboard photographs move at different depths behind the workspace.
+Motion is reduced on small screens and respects reduced-motion preferences.
+A back-to-top arrow in the footer returns focus to the opening heading.
 
 | Frontend area | Main implementation |
 | --- | --- |

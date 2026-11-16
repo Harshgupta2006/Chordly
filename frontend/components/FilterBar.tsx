@@ -11,7 +11,7 @@ interface FilterBarProps {
 
 export function FilterBar({ filters, onChangeFilters, genres }: FilterBarProps) {
   return (
-    <div className="bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-zinc-800/80 p-4 shadow-md">
+    <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4 shadow-md">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
         {/* Search input */}
         <div className="relative lg:col-span-2">

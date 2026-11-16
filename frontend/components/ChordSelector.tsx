@@ -25,7 +25,7 @@ export function ChordSelector({
   const selectedSet = new Set(selectedChords);
 
   return (
-    <div className="bg-zinc-900/80 backdrop-blur-md rounded-2xl border border-zinc-800 p-4 sm:p-5 shadow-xl">
+    <div className="bg-zinc-900/80 rounded-2xl border border-zinc-800 p-4 sm:p-5 shadow-xl">
       {/* Header with counter and clear */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-800/80 mb-4">
         <div className="flex flex-wrap items-center gap-2">

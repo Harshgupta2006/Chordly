@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { SongSheet, SongSheetPart } from "@/lib/types";
 import { Fretboard } from "@/components/Fretboard";
 import ChordlyLogo from "@/components/ChordlyLogo";
+import { PracticeButton } from "@/components/PracticeButton";
 import { getStoredPracticeList, toggleFavoriteSong } from "@/lib/localStorage";
 
 const DIFFICULTY_LABELS: Record<number, string> = {
@@ -171,6 +172,7 @@ export default function SongDetailPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <PracticeButton songId={song.id} />
             <button
               type="button"
               onClick={handleToggleFavorite}

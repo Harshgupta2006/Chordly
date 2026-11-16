@@ -20,6 +20,266 @@ nextjs-portal {
   display: none !important;
 }
 
+.workspace-page {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  background: #09090b;
+}
+.workspace-content { position: relative; z-index: 1; }
+.guitar-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 1400px;
+}
+.guitar-background-portrait, .guitar-background-macro {
+  position: absolute;
+  background-position: center;
+  background-size: cover;
+  mix-blend-mode: lighten;
+  mask-image: radial-gradient(ellipse, #000 25%, transparent 72%);
+}
+.guitar-background-portrait {
+  width: min(70vw, 1000px);
+  height: 125vh;
+  right: -18%;
+  top: 0;
+  opacity: .13;
+  background-image: url("/images/guitar-portrait.webp");
+}
+.guitar-background-macro {
+  width: min(90vw, 1200px);
+  height: 110vh;
+  bottom: -20vh;
+  left: -24%;
+  opacity: .04;
+  background-image: url("/images/guitar-macro.webp");
+}
+.guitar-background-shade { position: absolute; inset: 0; background: linear-gradient(#09090b66, transparent 35%, #09090b33); }
+.guitar-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: min(780px, 88svh);
+  padding: 4rem 0 6rem;
+  perspective: 1200px;
+}
+.guitar-hero-copy { position: relative; z-index: 2; width: 56%; }
+.guitar-hero h1 {
+  max-width: 46rem;
+  font-size: clamp(3rem, 6.6vw, 6.4rem);
+  font-weight: 500;
+  letter-spacing: -.065em;
+  line-height: 1.04;
+  text-wrap: balance;
+  outline: none;
+}
+.guitar-hero h1 span { color: #d6b989; }
+.guitar-hero-copy p { max-width: 26rem; margin-top: 1.75rem; font-size: .95rem; line-height: 1.8; color: #a8a6a1; }
+.guitar-hero-action {
+  display: inline-flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2.25rem;
+  padding: .65rem .75rem .65rem 1.5rem;
+  border-radius: 2rem;
+  background: #e9b765;
+  color: #211909;
+  font-size: .85rem;
+  font-weight: 600;
+  transition: background 250ms cubic-bezier(.22,1,.36,1), transform 250ms cubic-bezier(.22,1,.36,1);
+}
+.guitar-hero-action span { display: grid; width: 2.2rem; height: 2.2rem; place-items: center; border-radius: 50%; background: #21190914; }
+.guitar-hero-action:hover { background: #f1c782; transform: translateY(-2px); }
+.guitar-stage {
+  position: absolute;
+  inset: -3rem -2rem -3rem 43%;
+  display: grid;
+  place-items: center;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+.guitar-object {
+  position: relative;
+  height: min(790px, 92svh);
+  aspect-ratio: 2 / 3;
+  transform: rotateY(-12deg) rotateX(5deg) rotateZ(-7deg) scale(.94);
+  transform-style: preserve-3d;
+}
+.guitar-part { position: absolute; inset: 0; transform-style: preserve-3d; }
+.guitar-part img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.guitar-part-body img { clip-path: inset(45.5% 0 0 0); }
+.guitar-part-neck img { clip-path: inset(17% 0 54.4% 0); }
+.guitar-part-head img { clip-path: inset(0 0 82.9% 0); }
+.guitar-orbit {
+  position: absolute;
+  width: 90%;
+  height: 40%;
+  bottom: 4%;
+  border: 1px solid rgb(233 183 101 / .1);
+  border-radius: 50%;
+  transform: rotateX(74deg) rotateZ(-20deg);
+}
+.guitar-scroll-cue {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 44px;
+  bottom: .75rem;
+  font-size: .7rem;
+  color: #8f8c86;
+}
+.guitar-hero :is(a, button):focus-visible, .back-to-top:focus-visible { outline: 2px solid #e9b765; outline-offset: 5px; }
+.workspace-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: min(calc(100% - 3rem), 76rem);
+  margin: 3rem auto 0;
+  padding: 3rem 0;
+  border-top: 1px solid #ffffff0d;
+}
+.workspace-footer > p { font-size: 1.3rem; font-weight: 600; letter-spacing: -.04em; color: #b9b6af; }
+.back-to-top { display: inline-flex; align-items: center; gap: 1rem; min-height: 56px; color: #c8c3ba; font-size: .8rem; }
+.back-to-top-icon { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 50%; background: #e9b765; color: #211909; transition: transform 250ms cubic-bezier(.22,1,.36,1); }
+.back-to-top:hover .back-to-top-icon { transform: translateY(-4px); }
+@media (max-width: 767px) {
+  .guitar-hero { display: block; min-height: 0; padding: 2.5rem 0 3.5rem; }
+  .guitar-hero-copy { width: 100%; }
+  .guitar-hero h1 { font-size: clamp(2.7rem, 9vw, 4rem); max-width: 34rem; }
+  .guitar-hero-copy p { max-width: 23rem; font-size: .875rem; margin-top: 1.25rem; }
+  .guitar-hero-action { margin-top: 1.5rem; }
+  .guitar-stage { position: relative; inset: auto; width: 100%; height: min(530px, 75svh); margin-top: 1rem; }
+  .guitar-object { height: min(560px, 80svh); }
+  .guitar-orbit { bottom: 0; }
+  .guitar-background-portrait { width: 100vw; right: -35%; opacity: .06; }
+  .guitar-background-macro { width: 120vw; left: -40%; }
+  .workspace-footer { width: calc(100% - 2rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guitar-object { transform: rotateZ(-7deg); }
+  .guitar-background-macro { opacity: .04; }
+}
+
+.personal-workspace {
+  --personal-motion: cubic-bezier(0.22, 1, 0.36, 1);
+  display: grid;
+  gap: 1.5rem;
+  padding-block: 1.5rem 2rem;
+  scroll-margin-top: 6rem;
+}
+.personal-heading-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: .75rem;
+}
+.personal-heading {
+  font-size: clamp(1.9rem, 3.4vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -.055em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.personal-shell {
+  min-width: 0;
+  padding: .35rem;
+  border-radius: 1.85rem;
+  background: rgb(255 255 255 / .035);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .07);
+}
+.personal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(17rem, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+.personal-feed, .personal-preferences, .personal-history, .personal-next-chord {
+  min-width: 0;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: #111113;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .035);
+}
+.personal-preferences { display: grid; gap: 1.25rem; }
+.personal-label { display: block; font-size: .8rem; font-weight: 500; color: #b9b9bf; }
+.personal-choice, .personal-select {
+  min-height: 44px;
+  border-radius: .85rem;
+  background: #1d1d20;
+  color: #b9b9bf;
+  font-size: .875rem;
+  padding: .65rem 1rem;
+  transition: background 200ms var(--personal-motion), color 200ms var(--personal-motion);
+}
+.personal-select { display: block; width: 100%; }
+.personal-choice[aria-pressed="true"] { background: #e9b765; color: #241b0b; }
+.personal-choice:hover { background: #343029; color: #f1d7aa; }
+.personal-choice[aria-pressed="true"]:hover { background: #f1c782; color: #241b0b; }
+.personal-side { display: grid; min-width: 0; gap: 1.5rem; }
+.personal-song {
+  display: flex;
+  align-items: start;
+  gap: .75rem;
+  padding-block: 1.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / .06);
+  animation: personal-enter 500ms var(--personal-motion) both;
+}
+.personal-song:last-child { border-bottom: 0; padding-bottom: .5rem; }
+.personal-song-featured {
+  padding: 1.5rem;
+  margin-bottom: .25rem;
+  border-bottom: 0;
+  border-radius: 1.25rem;
+  background: linear-gradient(90deg, rgb(30 26 21 / .98) 25%, rgb(24 22 19 / .87) 70%, rgb(24 22 19 / .65)), url("/images/guitar-macro.webp") center / cover;
+}
+.personal-song-featured .personal-song-title { font-size: clamp(1.4rem, 2.4vw, 2rem); }
+.personal-song-meta { margin-bottom: .5rem; color: #a9a5a0; font-size: .7rem; letter-spacing: .04em; }
+.personal-song-title { display: inline-block; color: #f3f0e9; font-size: 1.1rem; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; overflow-wrap: anywhere; }
+.personal-song-title:hover, .personal-sheet-link:hover { color: #f3c77f; }
+.personal-reason { margin-top: .8rem; max-width: 50ch; font-size: .75rem; line-height: 1.65; color: #c6b9a4; }
+.personal-sheet-link { display: inline-flex; align-items: center; gap: .7rem; min-height: 44px; font-size: .8rem; font-weight: 500; color: #e6bb78; }
+.personal-practice-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .5rem .75rem; border-radius: .8rem; font-size: .75rem; font-weight: 500; color: #c8c8ce; background: rgb(255 255 255 / .04); transition: background 200ms var(--personal-motion), color 200ms var(--personal-motion); }
+.personal-practice-button:hover:enabled { background: rgb(233 183 101 / .1); color: #ecc58a; }
+.personal-practice-button:disabled { color: #7f8d7f; cursor: default; }
+.personal-icon-button { display: inline-flex; align-items: center; justify-content: center; height: 44px; width: 44px; border-radius: 50%; color: #9f9fa9; transition: background 200ms var(--personal-motion), color 200ms var(--personal-motion); }
+.personal-icon-button:hover { background: rgb(255 255 255 / .06); color: #e6bb78; }
+.personal-icon-button[aria-pressed="true"] { color: #e6bb78; }
+.personal-text-button, .personal-preference-toggle { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: .75rem; font-size: .75rem; color: #a5a5ae; transition: color 200ms var(--personal-motion); }
+.personal-preference-toggle { padding: .5rem 1rem; border-radius: 2rem; background: rgb(255 255 255 / .05); white-space: nowrap; }
+.personal-text-button:hover, .personal-preference-toggle:hover { color: #f0ca8d; }
+.personal-primary { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 1rem; border-radius: 2rem; padding: .65rem 1.15rem; font-size: .8rem; font-weight: 600; background: #e9b765; color: #211909; transition: background 220ms var(--personal-motion), transform 220ms var(--personal-motion); }
+.personal-primary:hover { background: #f1c782; transform: translateY(-1px); }
+.personal-primary:active { transform: translateY(0); }
+.personal-button-icon { display: inline-flex; width: 1.65rem; height: 1.65rem; align-items: center; justify-content: center; border-radius: 50%; background: rgb(33 25 9 / .1); }
+.personal-next-chord { background: #171511; }
+.personal-chord-name { color: #f0d0a0; font-size: 4.5rem; font-weight: 500; letter-spacing: -.07em; line-height: 1; }
+.personal-empty { padding: 3rem 0; }
+.personal-data-controls { display: flex; flex-wrap: wrap; gap: 1rem; padding-inline: .5rem; }
+.personal-reset { flex-basis: 100%; padding: 1rem; border-radius: 1rem; font-size: .8rem; color: #d5c9b7; background: #1e1a14; }
+.personal-loading { height: 22rem; border-radius: 1.5rem; background: #141416; }
+.personal-workspace :is(a, button, select):focus-visible, .personal-practice-button:focus-visible { outline: 2px solid #e9b765; outline-offset: 4px; }
+@keyframes personal-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 900px) { .personal-layout { grid-template-columns: minmax(0, 1fr); } .personal-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 639px) {
+  .personal-heading-row { align-items: start; flex-direction: column; gap: 1rem; }
+  .personal-workspace { padding-block: .75rem 1.5rem; }
+  .personal-side { grid-template-columns: minmax(0, 1fr); }
+  .personal-feed, .personal-preferences, .personal-history, .personal-next-chord { padding: 1.1rem; }
+  .personal-song-featured { padding: 1.1rem; }
+  .personal-select { font-size: 1rem; }
+}
+
 /* Touch controls stay usable on phones without disabling browser zoom. */
 @media (max-width: 639px) {
   input, select, textarea { font-size: 16px; }
