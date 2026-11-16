@@ -275,3 +275,41 @@ test("fretboard diagrams can shrink within narrow song cards without losing thei
     assert.match(svg.props["aria-label"], /C chord diagram/);
   }
 });
+
+test("mobile anatomy supports area navigation and linked tap targets independently of screen height", () => {
+  const values = [-1, null];
+  let stateIndex = 0;
+  let scroll;
+  const chapters = ["Headstock", "Fretboard", "Bridge"].map((name, index) => ({
+    id: `area-${index}`, title: `${name} area`, focus: { x: .5, y: .5 }, scale: 2,
+    parts: [{ name, description: `The function of the ${name.toLowerCase()}.`, x: .5, y: .5 }],
+  }));
+  const { MobileGuitarAnatomy } = component("GuitarScrollScene", {
+    react: {
+      useRef: () => ({ current: { getBoundingClientRect: () => ({ top: -300, bottom: 100 }) } }),
+      useState: () => { const index = stateIndex++; return [values[index], value => { values[index] = value; }]; },
+    },
+    "next/image": {}, "@gsap/react": {}, gsap: { gsap: { registerPlugin() {} } }, "gsap/ScrollTrigger": {},
+    "@/lib/guitarAnatomy": { guitarChapters: chapters, projectGuitarAnchor: () => ({ x: .5, y: .5 }) },
+  }, { window: { innerHeight: 700, scrollY: 500, scrollTo: options => { scroll = options; } } });
+  const render = () => { stateIndex = 0; return MobileGuitarAnatomy(); };
+  let tree = render();
+  assert.equal(nodes(tree).find(node => text(node) === "Previous area").props.disabled, true);
+  nodes(tree).find(node => node.type === "button" && text(node) === "Explore tuning area").props.onClick();
+  tree = render();
+  const marker = nodes(tree).find(node => node.props?.["aria-label"] === "Highlight Headstock");
+  marker.props.onClick();
+  tree = render();
+  assert.equal(nodes(tree).find(node => node.props?.["aria-label"] === "Highlight Headstock").props["aria-pressed"], true);
+  const label = nodes(tree).find(node => node.type === "button" && text(node) === "1Headstock");
+  assert.equal(label.props["aria-pressed"], true);
+  assert.ok(nodes(tree).some(node => node.props?.id === label.props["aria-describedby"]));
+  label.props.onClick();
+  assert.equal(scroll.top, 104);
+  nodes(tree).find(node => node.type === "select").props.onChange({ target: { value: "2" } });
+  tree = render();
+  assert.equal(values[1], null);
+  assert.ok(nodes(tree).some(node => node.props?.["aria-label"] === "Highlight Bridge"));
+  nodes(tree).find(node => node.type === "button" && text(node) === "Complete guitar").props.onClick();
+  assert.equal(values[0], -1);
+});

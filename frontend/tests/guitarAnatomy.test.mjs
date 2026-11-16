@@ -50,6 +50,7 @@ test("reduced motion and compact screens retain the static anatomy without initi
   for (const conditions of [
     { motion: false, tall: true, desktop: true },
     { motion: true, tall: false, desktop: false },
+    { motion: true, tall: true, desktop: false },
   ]) {
     let reverted = false;
     let cleanup;

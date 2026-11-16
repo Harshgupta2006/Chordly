@@ -9,12 +9,15 @@ import { guitarChapters, projectGuitarAnchor } from "@/lib/guitarAnatomy";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
+const mobileGuitarQuery = "(max-width: 767px), (max-width: 1023px) and (max-height: 500px)";
+
 export function GuitarBackdrop({ targetId = "chordly-workspace" }: { targetId?: string }) {
   const background = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
     const media = gsap.matchMedia();
-    media.add("(prefers-reduced-motion: no-preference)", () => {
+    media.add({ motion: "(prefers-reduced-motion: no-preference)", mobile: mobileGuitarQuery }, context => {
+      if (!context.conditions?.motion || context.conditions.mobile) return;
       const workspace = document.getElementById(targetId);
       if (!workspace) return;
       const timeline = gsap.timeline({
@@ -62,6 +65,7 @@ export function GuitarScrollHero() {
   const [animated, setAnimated] = useState(false);
   const [currentGroup, setCurrentGroup] = useState<number | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
+  const [mobile, setMobile] = useState(false);
 
   useGSAP(() => {
     const root = hero.current;
@@ -72,7 +76,7 @@ export function GuitarScrollHero() {
       desktop: "(min-width: 768px)",
       tall: "(min-width: 768px) and (min-height: 700px), (min-height: 800px)",
     }, context => {
-      if (!context.conditions?.motion || !context.conditions?.tall) return;
+      if (!context.conditions?.motion || !context.conditions?.tall || !context.conditions?.desktop) return;
       const desktop = Boolean(context.conditions.desktop);
       const viewport = root.querySelector<HTMLElement>(".guitar-hero-viewport")!;
       const stage = root.querySelector<HTMLElement>(".guitar-stage")!;
@@ -181,11 +185,15 @@ export function GuitarScrollHero() {
         stage.style.removeProperty("transform");
       };
     });
+    media.add(mobileGuitarQuery, () => {
+      setMobile(true);
+      return () => setMobile(false);
+    });
     return () => media.revert();
   }, { scope: hero });
 
   return (
-    <section ref={hero} className="guitar-hero" aria-labelledby="guitar-heading">
+    <section ref={hero} className={`guitar-hero${animated ? " guitar-hero-animated" : ""}${mobile ? " guitar-hero-mobile" : ""}`} aria-labelledby="guitar-heading">
       <div className="guitar-hero-viewport">
         <div className="guitar-hero-copy">
           <h1 id="guitar-heading" tabIndex={-1}>
@@ -200,6 +208,7 @@ export function GuitarScrollHero() {
               width={1024} height={1536} sizes="(max-width: 767px) 90vw, 650px" priority unoptimized />
           </div>
         </div>
+        {mobile && <MobileGuitarAnatomy />}
         <div className="guitar-anatomy">
           {guitarChapters.map((chapter, chapterIndex) => (
             <section key={chapter.id} className={`guitar-anatomy-chapter ${!animated || currentGroup === chapterIndex ? "is-current" : ""}`} aria-labelledby={`guitar-${chapter.id}`}>
@@ -267,6 +276,88 @@ export function GuitarScrollHero() {
           <p className="guitar-scroll-cue">Scroll to explore your guitar <span aria-hidden="true">↓</span></p>
         </div>
       </div>
+    </section>
+  );
+}
+
+export function MobileGuitarAnatomy() {
+  const canvas = useRef<HTMLDivElement>(null);
+  const [group, setGroup] = useState(-1);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const chapter = guitarChapters[group];
+  const focus = chapter?.focus ?? { x: 0.5, y: 0.5 };
+  const scale = chapter ? Math.min(chapter.scale, 2.1) : 1;
+  const camera = { x: (0.5 - focus.x) * 2 / 3 * scale, y: (0.5 - focus.y) * scale, scale };
+  const parts = chapter?.parts.map((part, index) => ({
+    ...part, index,
+    point: projectGuitarAnchor(part, { left: 1 / 6, top: 0, width: 2 / 3, height: 1 }, camera),
+    markerY: (index + 1) / (chapter.parts.length + 1),
+  })) ?? [];
+
+  function changeGroup(index: number) {
+    setGroup(index);
+    setHighlighted(null);
+  }
+
+  function showPart(name: string) {
+    setHighlighted(name);
+    const bounds = canvas.current?.getBoundingClientRect();
+    if (bounds && (bounds.top < 80 || bounds.bottom > window.innerHeight)) {
+      window.scrollTo({ top: window.scrollY + bounds.top - 96, behavior: "instant" });
+    }
+  }
+
+  return (
+    <section className="guitar-mobile-anatomy" aria-labelledby="mobile-anatomy-heading">
+      <h2 id="mobile-anatomy-heading">Explore your guitar</h2>
+      <label className="sr-only" htmlFor="mobile-guitar-area">Guitar area</label>
+      <select id="mobile-guitar-area" value={group} onChange={event => changeGroup(Number(event.target.value))}>
+        <option value={-1}>Complete guitar</option>
+        {guitarChapters.map((item, index) => <option key={item.id} value={index}>{item.title}</option>)}
+      </select>
+      <div ref={canvas} className="mobile-anatomy-canvas">
+        <Image className="mobile-anatomy-guitar" src="/images/guitar-studio.webp" width={1024} height={1536}
+          sizes="(max-width: 767px) 70vw, 280px" unoptimized
+          alt={chapter ? `Close-up of the guitar for ${chapter.title.toLowerCase()}.` : "Complete acoustic guitar, from headstock to bridge."}
+          style={{ transform: `translate(${(0.5 - focus.x) * scale * 100}%, ${(0.5 - focus.y) * scale * 100}%) scale(${scale})` }} />
+        <svg viewBox="0 0 100 100" className="mobile-anatomy-pointers" aria-hidden="true">
+          {parts.map(part => (
+            <g key={part.name} className={highlighted === part.name ? "is-highlighted" : ""}>
+              <line x1="8" y1={part.markerY * 100} x2={part.point.x * 100} y2={part.point.y * 100} />
+              <circle cx={part.point.x * 100} cy={part.point.y * 100} r="1" />
+            </g>
+          ))}
+        </svg>
+        {parts.map(part => (
+          <button key={part.name} type="button" className="mobile-anatomy-marker"
+            style={{ left: "8%", top: `${part.markerY * 100}%` }}
+            aria-label={`Highlight ${part.name}`} aria-pressed={highlighted === part.name}
+            aria-describedby={`mobile-description-${chapter.id}-${part.index}`}
+            onFocus={() => setHighlighted(part.name)} onClick={() => setHighlighted(part.name)}>
+            <span>{part.index + 1}</span>
+          </button>
+        ))}
+        {highlighted && <p className="mobile-anatomy-caption" role="status">{highlighted}</p>}
+      </div>
+      <div className="mobile-anatomy-navigation">
+        <button type="button" disabled={group === -1} onClick={() => changeGroup(group - 1)}>Previous area</button>
+        <button type="button" onClick={() => changeGroup(group === guitarChapters.length - 1 ? -1 : group + 1)}>
+          {group === -1 ? "Explore tuning area" : group === guitarChapters.length - 1 ? "Complete guitar" : "Next area"}
+        </button>
+      </div>
+      <p className="mobile-anatomy-hint" role="status">{chapter ? "Tap a name or number to highlight the matching part." : "Choose an area to see its parts up close."}</p>
+      <dl className="mobile-anatomy-labels">
+        {parts.map(part => (
+          <div key={part.name}>
+            <dt><button type="button" className="guitar-part-label" aria-pressed={highlighted === part.name}
+              aria-describedby={`mobile-description-${chapter.id}-${part.index}`}
+              onFocus={() => setHighlighted(part.name)} onClick={() => showPart(part.name)}>
+              <span className="guitar-part-number" aria-hidden="true">{part.index + 1}</span>{part.name}
+            </button></dt>
+            <dd id={`mobile-description-${chapter.id}-${part.index}`}>{part.description}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }

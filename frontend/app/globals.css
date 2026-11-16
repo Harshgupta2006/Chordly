@@ -98,6 +98,30 @@ nextjs-portal {
 .guitar-stage { position: relative; display: grid; place-items: center; min-width: 0; pointer-events: none; }
 .guitar-object { position: relative; width: min(100%, 420px); aspect-ratio: 2 / 3; transform-origin: center; }
 .guitar-object img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.guitar-mobile-anatomy { width: 100%; min-width: 0; }
+.guitar-mobile-anatomy h2 { margin-bottom: 1rem; color: #d6b989; font-size: 1.5rem; font-weight: 500; letter-spacing: -.03em; }
+.guitar-mobile-anatomy select { width: 100%; min-height: 48px; padding: .65rem .9rem; border: 1px solid #ffffff1a; border-radius: .75rem; background: #171719; color: #ede7db; font-size: 1rem; }
+.mobile-anatomy-canvas { position: relative; width: 100%; max-width: 26rem; aspect-ratio: 1; margin: 1rem auto; overflow: hidden; }
+.mobile-anatomy-guitar { position: absolute; top: 0; left: 16.666667%; width: 66.666667%; height: 100%; object-fit: contain; transform-origin: center; }
+.mobile-anatomy-pointers { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.mobile-anatomy-pointers line { stroke: #b79a6c; stroke-width: .4; }
+.mobile-anatomy-pointers circle { fill: #e9cda1; stroke: #09090b; stroke-width: .35; }
+.mobile-anatomy-pointers .is-highlighted line { stroke: #ffe4b5; stroke-width: .7; }
+.mobile-anatomy-pointers .is-highlighted circle { fill: #ffe4b5; }
+.mobile-anatomy-marker { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; transform: translate(-50%, -50%); touch-action: manipulation; }
+.mobile-anatomy-marker span { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #e2c38e; border-radius: 50%; background: #17130e; color: #f3d7a8; font-size: .875rem; }
+.mobile-anatomy-marker[aria-pressed="true"] span, .mobile-anatomy-labels button[aria-pressed="true"] .guitar-part-number { background: #e9b765; color: #211909; }
+.mobile-anatomy-labels button[aria-pressed="true"] { color: #f2cf94; }
+.mobile-anatomy-navigation { display: flex; flex-wrap: wrap; gap: .75rem; }
+.mobile-anatomy-navigation button { flex: 1; min-height: 44px; padding: .65rem .75rem; border: 1px solid #ffffff1a; border-radius: .75rem; color: #e9cda1; font-size: .8rem; }
+.mobile-anatomy-navigation button:disabled { opacity: .4; }
+.mobile-anatomy-hint { margin-top: 1rem; font-size: .8rem; line-height: 1.6; color: #aaa59a; }
+.mobile-anatomy-labels { display: grid; gap: .75rem; margin-top: 1rem; }
+.mobile-anatomy-labels dt { color: #ede7db; font-size: 1rem; font-weight: 600; }
+.mobile-anatomy-labels dd { margin-left: 2.65rem; color: #bbb5aa; font-size: .875rem; line-height: 1.6; }
+.mobile-anatomy-caption { position: absolute; right: .75rem; bottom: .75rem; max-width: calc(100% - 1.5rem); border-radius: .5rem; padding: .45rem .75rem; background: #09090be6; color: #e9cda1; font-size: .875rem; }
+.guitar-hero-mobile .guitar-stage, .guitar-hero-mobile .guitar-anatomy-pointers { display: none; }
+.guitar-hero-mobile .guitar-anatomy { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .guitar-anatomy { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem 4rem; }
 .guitar-anatomy-chapter h2 { font-size: clamp(1.5rem, 3vw, 2.7rem); font-weight: 500; line-height: 1.1; letter-spacing: -.045em; color: #d6b989; margin-bottom: 1.75rem; }
 .guitar-anatomy-chapter dl { display: grid; gap: 1rem; }
@@ -187,6 +211,11 @@ button.guitar-part-label:hover, .guitar-part-label.is-highlighted { color: #f2cf
   .guitar-background-portrait { width: 100vw; right: -35%; opacity: .06; }
   .guitar-background-macro { width: 120vw; left: -40%; }
   .workspace-footer { width: calc(100% - 2rem); }
+}
+@media (max-width: 767px), (max-width: 1023px) and (max-height: 500px) {
+  .guitar-atmosphere { display: none; }
+  .guitar-hero-mobile .guitar-hero-viewport { grid-template-columns: minmax(0, 1fr); }
+  .workspace-page .personal-song-featured { background: #171511; }
 }
 .chord-setup-grid { display: grid; gap: 1.5rem; align-items: start; }
 .chord-setup-grid > :first-child:empty { display: none; }

@@ -165,9 +165,11 @@ navigation and guitar-lesson search links.
 The opening guitar anatomy tour uses one continuous photograph and GSAP
 ScrollTrigger to guide close-ups of the tuning area, playing surface, body and
 bridge. Numbered labels match markers on the guitar. Hovering, focusing or tapping
-a label highlights its pointer. Compact screens and reduced-motion preferences
-use readable static explanations. Ambient body and fretboard photographs provide
-background movement through the workspace and song sheets.
+a label highlights its pointer. Phones provide a tap-to-explore anatomy viewer
+with an area selector, previous/next controls and linked numbered markers.
+Reduced-motion and JavaScript-free views retain readable explanations. Desktop
+body and fretboard photographs provide ambient background movement. Mobile
+workspaces, recommendations and song sheets use a plain dark background.
 
 Audio recognition and manual chord selection share a setup area after the tour.
 Matching songs follow, with separate Show more controls for playable songs and
