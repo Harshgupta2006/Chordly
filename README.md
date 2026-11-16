@@ -51,8 +51,8 @@ the updated practice list and filters back to localStorage.
 Changing known chords or filters starts a 300 ms debounce. The workspace then
 requests matching songs and next-chord suggestions together with `Promise.all`.
 Loading states provide feedback while results update, and a retry control handles
-request errors. The favourites view derives its results from the current matches
-and the saved favourite song IDs.
+request errors. The favourites view matches saved song IDs against the selected
+chords and filters, including saved songs with additional chords to learn.
 
 The typed API client provides a shared interface for catalogue access. By default,
 it calls the bundled TypeScript matching engine and reads chord, song and sheet
