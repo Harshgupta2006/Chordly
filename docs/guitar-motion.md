@@ -26,7 +26,9 @@ song-page routes on desktop. Phones use a plain dark background throughout the
 workspace, personalized cards and song sheets.
 
 The scroll animation activates with JavaScript and normal motion preferences at
-desktop widths with at least 700px of viewport height. Phones and compact
+desktop widths of at least 1024px with 480px of viewport height, or widths of at
+least 768px with 600px of height. Short laptop windows use smaller headings and
+tighter callout spacing so the labels fit above the shortcuts. Phones and compact
 landscape screens use a tap-to-explore viewer. A native area selector and Previous
 area / Next area controls navigate from the complete guitar through the six
 groups. Tapping a name or a 44px numbered target highlights its matching pointer.

@@ -187,6 +187,9 @@ ScrollTrigger to guide close-ups of the tuning area, playing surface, body and
 bridge. Numbered labels match markers on the guitar. Hovering, focusing or tapping
 a label highlights its pointer. Phones provide a tap-to-explore anatomy viewer
 with an area selector, previous/next controls and linked numbered markers.
+Tablets support the scrolling tour in portrait and landscape when space permits.
+Short laptop windows use compact headings and callout spacing for the same guided
+sequence. Larger laptop windows retain the full-size tour layout.
 Reduced-motion and JavaScript-free views retain readable explanations. Desktop
 body and fretboard photographs provide ambient background movement. Mobile
 workspaces, recommendations and song sheets use a plain dark background.

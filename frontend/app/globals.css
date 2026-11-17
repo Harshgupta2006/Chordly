@@ -171,6 +171,19 @@ button.guitar-part-label:hover, .guitar-part-label.is-highlighted { color: #f2cf
 .guitar-hero-animated .guitar-pointer-group { opacity: 0; }
 .guitar-hero-animated .guitar-tour-navigation { position: absolute; bottom: 1rem; left: 0; right: 0; }
 .guitar-hero-animated .guitar-scroll-cue { display: block; }
+@media (min-width: 768px) and (max-height: 699px) {
+  .guitar-hero-animated .guitar-hero-copy { top: 10%; }
+  .guitar-hero-animated h1 { font-size: clamp(2.6rem, 5vw, 4.25rem); }
+  .guitar-hero-animated .guitar-hero-copy p { margin-top: 1rem; font-size: .875rem; line-height: 1.5; }
+  .guitar-hero-animated .guitar-anatomy { top: 3%; width: 40%; }
+  .guitar-hero-animated .guitar-anatomy-chapter h2 { font-size: 1.6rem; margin-bottom: .75rem; }
+  .guitar-hero-animated .guitar-label-hint { display: none; }
+  .guitar-hero-animated .guitar-anatomy-chapter dl { gap: .5rem; }
+  .guitar-hero-animated .guitar-anatomy-chapter dd { line-height: 1.35; }
+  .guitar-hero-animated .guitar-tour-navigation { bottom: .5rem; gap: 1rem; }
+  .guitar-hero-animated .guitar-hero-action { min-height: 44px; padding: .4rem .5rem .4rem 1rem; font-size: .75rem; gap: .75rem; }
+  .guitar-hero-animated .guitar-hero-action span { width: 1.8rem; height: 1.8rem; }
+}
 .workspace-footer {
   position: relative;
   z-index: 1;

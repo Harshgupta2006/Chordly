@@ -74,7 +74,7 @@ export function GuitarScrollHero() {
     media.add({
       motion: "(prefers-reduced-motion: no-preference)",
       desktop: "(min-width: 768px)",
-      tall: "(min-width: 768px) and (min-height: 700px), (min-height: 800px)",
+      tall: "(min-width: 1024px) and (min-height: 480px), (min-width: 768px) and (min-height: 600px)",
     }, context => {
       if (!context.conditions?.motion || !context.conditions?.tall || !context.conditions?.desktop) return;
       const desktop = Boolean(context.conditions.desktop);
