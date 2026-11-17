@@ -9,7 +9,10 @@ import numpy as np
 import onnxruntime as ort
 from scipy.fft import rfft
 
-from preprocessing import AudioConfig, InvalidAudio, load_audio, prepare_audio
+from preprocessing import (
+    AudioConfig, InvalidAudio, activity_profile, load_audio, prepare_audio, resample,
+    validate_samples,
+)
 
 
 class Predictor:
@@ -53,13 +56,17 @@ class Predictor:
 
     def predict(self, audio, sr):
         started = time.perf_counter()
+        audio = validate_samples(audio, sr, self.audio.max_input_seconds)
         scores = self.scores(audio, sr)
         index = int(scores.argmax())
         label, confidence = self.names[index], float(scores[index])
         threshold = self.config["threshold"]
         supported = label in self.config["supported"]
         rms = float(np.sqrt(np.mean(np.asarray(audio, dtype=float) ** 2)))
-        status = ("silence" if rms < 0.0001 else "noise" if label == "Noise" else
+        _, onset, _ = activity_profile(
+            resample(audio, sr, self.audio.sample_rate), self.audio.sample_rate, self.audio
+        )
+        status = ("silence" if rms < 0.0001 or onset is None else "noise" if label == "Noise" else
                   "uncertain" if confidence < threshold else "unsupported" if not supported else "ok")
         return {
             "status": status, "predicted_class": label,

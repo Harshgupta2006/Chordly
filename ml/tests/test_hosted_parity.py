@@ -37,6 +37,7 @@ def test_original_and_export_agree_on_validation_and_generated_audio():
             selected.setdefault(row["label"], row)
     audio = [load_audio(row["local_path"]) for row in selected.values()]
     audio.extend([(np.zeros(44100, dtype=np.float32), 22050),
+                  (np.random.default_rng(42).normal(0, .0005, 66150).astype(np.float32), 22050),
                   (np.random.default_rng(42).normal(0, .01, (48000, 2)).astype(np.float32), 48000)])
     assert len(selected) == 25
     for samples, sr in audio:

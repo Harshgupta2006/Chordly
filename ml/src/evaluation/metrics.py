@@ -46,6 +46,26 @@ def classification_metrics(truth, prediction, class_names):
     }
 
 
+def recognition_metrics(recordings):
+    """Measure the decisions users can confirm, including rejected predictions."""
+    noise = [row for row in recordings if row["actual"] == "Noise"]
+    chords = [row for row in recordings if row["actual"] != "Noise"]
+    accepted_noise = sum(row["status"] == "ok" for row in noise)
+    accepted_chords = [row for row in chords if row["status"] == "ok"]
+    correct = sum(row["chord"] == row["actual"] for row in accepted_chords)
+    accepted = len(accepted_chords) + accepted_noise
+    return {
+        "noise_recordings": len(noise),
+        "noise_false_acceptances": accepted_noise,
+        "noise_false_acceptance_rate": accepted_noise / len(noise) if noise else None,
+        "chord_recordings": len(chords),
+        "accepted_chord_recordings": len(accepted_chords),
+        "chord_acceptance_rate": len(accepted_chords) / len(chords) if chords else None,
+        "accepted_predictions": accepted,
+        "accepted_prediction_accuracy": correct / accepted if accepted else None,
+    }
+
+
 def save_metrics(path: Path, metrics, class_names, title):
     write_json(path, metrics)
     import matplotlib

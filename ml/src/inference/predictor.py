@@ -10,7 +10,10 @@ import torch
 from src.dataset import ML_ROOT
 from src.features.spectral import MelConfig, log_mel
 from src.models.cnn import ChordCNN
-from src.preprocessing.audio import AudioConfig, InvalidAudio, load_audio, prepare_audio
+from src.preprocessing.audio import (
+    AudioConfig, InvalidAudio, activity_profile, load_audio, prepare_audio, resample,
+    validate_samples,
+)
 
 
 class Predictor:
@@ -69,13 +72,18 @@ class Predictor:
 
     def predict(self, audio, sr):
         start = time.perf_counter()
+        audio = validate_samples(audio, sr, self.audio.max_input_seconds)
         scores = self.scores(audio, sr)
         index = int(scores.argmax())
         label = self.names[index]
         confidence = float(scores[index])
         rms = float(np.sqrt(np.mean(np.asarray(audio, dtype=float) ** 2)))
+        # Use the frozen preprocessing floor to reject input with no detectable activity.
+        _, onset, _ = activity_profile(
+            resample(audio, sr, self.audio.sample_rate), self.audio.sample_rate, self.audio
+        )
         status = "ok"
-        if rms < 0.0001:
+        if rms < 0.0001 or onset is None:
             status = "silence"
         elif label == "Noise":
             status = "noise"

@@ -37,6 +37,12 @@ def test_scores_and_silent_recording(predictor):
     assert sum(result["class_scores"].values()) == pytest.approx(1.0, abs=1e-5)
 
 
+def test_low_level_hiss_below_activity_floor_is_not_accepted(predictor):
+    audio = np.random.default_rng(42).normal(0, 0.0005, 66150).astype(np.float32)
+    result = predictor.predict(audio, 22050)
+    assert result["status"] == "silence" and result["chord"] is None
+
+
 def test_unsupported_chord_is_not_added(predictor, monkeypatch):
     scores = np.zeros(25)
     scores[predictor.names.index("D#m")] = 1

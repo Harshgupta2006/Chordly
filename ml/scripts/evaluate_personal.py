@@ -11,8 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.dataset import write_json, file_sha256
 from src.inference.predictor import Predictor
-from src.preprocessing.audio import load_audio
-from src.evaluation.metrics import classification_metrics
+from src.evaluation.metrics import classification_metrics, recognition_metrics
 
 
 def main():
@@ -35,8 +34,7 @@ def main():
         actual = path.parent.name
         if actual not in predictor.names:
             raise ValueError(f"Unknown true label: {actual}")
-        y, sr = load_audio(path, max_seconds=5.0)
-        result = predictor.predict(y, sr)
+        result = predictor.predict_file(path)
         rows.append(
             {"file": str(path), "sha256": file_sha256(path), "actual": actual, **result}
         )
@@ -49,6 +47,7 @@ def main():
             "model_sha256": file_sha256(predictor.root / "best.pt"),
             "recordings": rows,
             "metrics": classification_metrics(truth, pred, predictor.names),
+            "recognition_metrics": recognition_metrics(rows),
             "note": "Macro metrics include all 25 model labels; consult per-class support when some chords are absent.",
         },
     )

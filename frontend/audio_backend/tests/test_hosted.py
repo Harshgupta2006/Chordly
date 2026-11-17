@@ -39,6 +39,16 @@ def test_health_and_real_inference(client):
     assert response.headers["cache-control"] == "no-store"
 
 
+def test_quiet_hiss_is_rejected_by_the_frozen_activity_floor(client):
+    audio = np.random.default_rng(42).normal(0, .0005, 66150).astype(np.float32)
+    buffer = io.BytesIO()
+    sf.write(buffer, audio, 22050, format="WAV", subtype="PCM_16")
+    response = client.post("/api/audio/predict-chord", files={"audio": ("hiss.wav", buffer.getvalue(), "audio/wav")})
+    assert response.status_code == 200
+    assert response.json()["status"] == "silence"
+    assert response.json()["chord"] is None
+
+
 @pytest.mark.parametrize("payload,mime,status", [
     (b"", "audio/wav", 422), (b"broken wav", "audio/wav", 422),
     (b"not audio", "text/plain", 415), (wav(.1), "audio/wav", 422),

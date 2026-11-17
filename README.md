@@ -154,6 +154,12 @@ Recall@5 and NDCG@5 using chronological practice-history splits. Personal histor
 The component manages permission feedback, request cancellation and timeouts.
 It releases microphone tracks, closes the AudioContext and revokes playback URLs
 when the recording is replaced or the component unmounts.
+Microphone startup resumes audio during the recording tap and provides a Cancel
+control with a bounded permission wait. Capture stops cleanly when the page is
+hidden, the microphone disconnects or the audio context is interrupted.
+Recordings below the frozen preprocessing activity floor are rejected, and
+rejected predictions display **No confirmed chord**. Confirmation remains
+available for accepted, supported chord results.
 
 ### Responsive interface
 
@@ -267,6 +273,9 @@ node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port 3100
 ```
 
 Open `http://127.0.0.1:3100/app`. Microphone access requires localhost or HTTPS.
+For another local frontend port, pass its exact origin to the API launcher with
+`--frontend-origin http://127.0.0.1:3105` and set `NEXT_PUBLIC_ML_API_URL` to the
+API's selected port. The launcher accepts explicit loopback origins.
 Use one 0.25-5 second WAV under 2 MiB. Recording stops after three seconds.
 Playback and Save WAV let you review it; recognition runs only after submission.
 

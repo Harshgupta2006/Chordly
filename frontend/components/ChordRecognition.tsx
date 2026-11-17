@@ -26,15 +26,34 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
     capturing.current = false;
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-    capture.current?.disconnect(); capture.current = null;
-    stream.current?.getTracks().forEach((track) => track.stop()); stream.current = null;
-    if (context.current) void context.current.close().catch(() => {});
+    if (capture.current) {
+      capture.current.port.onmessage = null;
+      capture.current.disconnect();
+      capture.current = null;
+    }
+    stream.current?.getTracks().forEach((track) => { track.onended = null; track.stop(); }); stream.current = null;
+    if (context.current) {
+      context.current.onstatechange = null;
+      void context.current.close().catch(() => {});
+    }
     context.current = null;
   }, []);
 
   useEffect(() => {
     alive.current = true;
     return () => { alive.current = false; release(); request.current?.abort(); };
+  }, [release]);
+
+  useEffect(() => {
+    const interrupt = () => {
+      if (!document.hidden || !context.current) return;
+      release();
+      chunks.current = [];
+      setError("Recording stopped when the page was hidden. Keep this page open and record again.");
+      setPhase("idle");
+    };
+    document.addEventListener("visibilitychange", interrupt);
+    return () => document.removeEventListener("visibilitychange", interrupt);
   }, [release]);
 
   useEffect(() => {
@@ -49,6 +68,7 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
     const samples = chunks.current.reduce((n, chunk) => n + chunk.length, 0);
     release();
     if (samples < sampleRate * 0.25) {
+      chunks.current = [];
       setError("The recording was too short. Record one strum for 1–3 seconds.");
       setPhase("idle"); return;
     }
@@ -57,20 +77,36 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
   }, [release]);
 
   const start = async () => {
+    if (context.current) return;
     setError(null); setNotice(null); setResult(null); setRecording(null); setPhase("requesting");
+    let audioContext: AudioContext | null = null;
     try {
       if (!navigator.mediaDevices?.getUserMedia || !window.isSecureContext) {
         throw new Error("Microphone access needs a supported browser on localhost or HTTPS.");
       }
+      // Resume during the tap, before the asynchronous permission prompt loses activation.
+      audioContext = new AudioContext();
+      context.current = audioContext;
+      if (!audioContext.audioWorklet || typeof AudioWorkletNode === "undefined") {
+        throw new Error("This browser does not support microphone capture. Choose a WAV recording instead.");
+      }
+      const resumed = audioContext.resume();
+      void resumed.catch(() => {});
+      timer.current = setTimeout(() => {
+        if (context.current !== audioContext) return;
+        release();
+        setError("Microphone startup timed out. Check the browser permission prompt and try again.");
+        setPhase("idle");
+      }, 20000);
       const input = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
       });
-      if (!alive.current) { input.getTracks().forEach((track) => track.stop()); return; }
+      if (!alive.current || context.current !== audioContext) { input.getTracks().forEach((track) => track.stop()); return; }
       stream.current = input;
-      const audioContext = new AudioContext(); context.current = audioContext;
       await audioContext.audioWorklet.addModule("/audio-capture-worklet.js");
-      await audioContext.resume();
-      if (!alive.current) { release(); return; }
+      await resumed;
+      if (!alive.current || context.current !== audioContext) return;
+      if (audioContext.state !== "running") throw new Error("Audio capture is paused. Keep this page open and try again.");
       const node = new AudioWorkletNode(audioContext, "chordly-capture"); capture.current = node;
       chunks.current = []; capturing.current = true;
       node.port.onmessage = (event: MessageEvent<Float32Array>) => {
@@ -78,8 +114,24 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
       };
       audioContext.createMediaStreamSource(input).connect(node);
       node.connect(audioContext.destination);
+      input.getAudioTracks().forEach(track => {
+        track.onended = () => {
+          if (context.current !== audioContext) return;
+          release(); chunks.current = [];
+          setError("Microphone access ended. Reconnect your microphone and record again.");
+          setPhase("idle");
+        };
+      });
+      audioContext.onstatechange = () => {
+        if (context.current !== audioContext || context.current?.state === "running") return;
+        release(); chunks.current = [];
+        setError("Audio capture was interrupted. Keep this page open and record again.");
+        setPhase("idle");
+      };
+      if (timer.current) clearTimeout(timer.current);
       setPhase("recording"); timer.current = setTimeout(stop, 3000);
     } catch (cause) {
+      if (audioContext && context.current !== audioContext) return;
       release();
       if (!alive.current) return;
       const name = cause instanceof DOMException ? cause.name : "";
@@ -92,7 +144,7 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
   };
 
   const submit = async () => {
-    if (!recording) return;
+    if (!recording || request.current) return;
     setPhase("processing"); setError(null);
     const controller = new AbortController(); request.current = controller;
     const timeout = setTimeout(() => controller.abort(), 60000);
@@ -126,6 +178,10 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
             {phase === "requesting" ? "Requesting microphone…" : recording ? "Record again" : "Record a strum"}
           </button>
         )}
+        {phase === "requesting" && (
+          <button type="button" className="min-h-11 rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+            onClick={() => { release(); setPhase("idle"); setNotice("Microphone request cancelled."); }}>Cancel microphone request</button>
+        )}
         <label className={`inline-flex min-h-11 items-center justify-center rounded-xl px-2 text-sm text-zinc-400 underline underline-offset-4 ${busy ? "opacity-50" : "cursor-pointer hover:text-zinc-200"}`}>
           Choose a WAV instead
           <input type="file" accept=".wav,audio/wav,audio/x-wav" disabled={busy} className="sr-only" aria-label="Choose a WAV recording"
@@ -155,13 +211,13 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
       {result && (
         <div className="mt-4 border-t border-zinc-800 pt-4" aria-live="polite">
           <div className="flex flex-wrap items-baseline gap-3">
-            <p className="text-2xl font-black text-zinc-100">{result.predicted_class === "Noise" ? "No clear chord" : formatChordLabel(result.predicted_class)}</p>
+            <p className="text-2xl font-black text-zinc-100">{result.status === "ok" ? formatChordLabel(result.predicted_class) : "No confirmed chord"}</p>
             <p className="text-xs text-zinc-400">Model score {Math.round(result.model_score * 100)}%</p>
           </div>
-          {result.predicted_class !== "Noise" && <p className="mt-1 text-xs text-zinc-400">Chord symbol: {result.predicted_class}</p>}
+          {result.status === "ok" && <p className="mt-1 text-xs text-zinc-400">Chord symbol: {result.predicted_class}</p>}
           {resultMessage && <p className="mt-2 text-xs text-amber-400">{resultMessage}</p>}
           <p className="mt-2 text-xs leading-relaxed text-zinc-400">This score is not a measured chance of correctness. A new guitar or microphone can produce confident mistakes.</p>
-          <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-400">
+          <dl aria-label="Model class scores" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-400">
             {topScores.map(([label, score]) => <div key={label} className="flex gap-2"><dt>{formatChordLabel(label)}</dt><dd>{(score * 100).toFixed(1)}%</dd></div>)}
           </dl>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
