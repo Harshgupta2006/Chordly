@@ -4,6 +4,20 @@ Find guitar songs you can play with the chords you know, discover near matches,
 and choose which chord to learn next. Record a single strum or upload a WAV to
 recognize a chord, review the result, and confirm it before adding it to your list.
 
+## Project highlights
+
+| Area | Current scope |
+| --- | --- |
+| Song catalogue | **187 songs** across **116 distinct artist entries** |
+| Music discovery | **5 genres** with chord, difficulty and search filters |
+| Chord library | **47 chord shapes** with interactive fingering diagrams |
+| Audio recognition | **25 model classes** covering 24 major/minor chords and Noise |
+| Guitar anatomy | **16 labelled parts** across **6 guided groups**, with mobile tap-to-explore controls |
+
+Catalogue figures come from the bundled song and chord data. The audio model's
+class count describes its prediction categories; measured accuracy is reported
+separately in [Audio model and evaluation](#audio-model-and-evaluation).
+
 ## Features and architecture
 
 - Guitar chord shapes, interactive diagrams and song sheets.
