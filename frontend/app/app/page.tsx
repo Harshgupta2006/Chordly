@@ -16,7 +16,7 @@ import { Fretboard } from "@/components/Fretboard";
 import { ProgressionPresets } from "@/components/ProgressionPresets";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import ChordlyLogo from "@/components/ChordlyLogo";
-import { ChordRecognition } from "@/components/ChordRecognition";
+import { AudioTools } from "@/components/AudioTools";
 import { PersonalizedWorkspace } from "@/components/PersonalizedWorkspace";
 import { GuitarBackdrop, GuitarScrollHero, WorkspaceFooter } from "@/components/GuitarScrollScene";
 import { WorkspaceHomeLink } from "@/components/WorkspaceLinks";
@@ -241,7 +241,7 @@ export default function WorkspacePage() {
       return;
     }
     setInspectorOpen(false);
-    jumpToWorkspaceSection("your-chords", "chord-inspector");
+    jumpToWorkspaceSection("chord-inspector-position", "chord-inspector");
   };
 
   // Toggle favorite
@@ -338,13 +338,12 @@ export default function WorkspacePage() {
         <section id="your-chords" className="chord-setup scroll-mt-24" aria-labelledby="chord-setup-heading">
           <div className="mb-6">
             <h2 id="chord-setup-heading" className="personal-heading">Your chords.</h2>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">Record a strum or choose the chords you know to find something to play.</p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">Tune your guitar, record a strum, or choose the chords you know to find something to play.</p>
           </div>
           <div className="chord-setup-grid">
             <div className="min-w-0">
-              {(process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true") && (
-                <ChordRecognition onConfirm={handleAddChord} />
-              )}
+              <AudioTools onConfirm={handleAddChord}
+                recognitionEnabled={process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true"} />
             </div>
             <div className="min-w-0 space-y-6">
               <ChordSelector
@@ -371,37 +370,39 @@ export default function WorkspacePage() {
               />
             </div>
 
-            <div id="chord-inspector" role="region" aria-label="Chord inspector" tabIndex={-1}
-              className="hidden lg:flex min-w-0 sticky top-20 bg-zinc-900/80 rounded-2xl border border-zinc-800 p-5 shadow-xl flex-col items-center">
-              <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Chord Inspector
-                </span>
-                <span className="text-[10px] text-zinc-400">Tap any chord</span>
-              </div>
+            <div id="chord-inspector-position" className="hidden min-w-0 self-stretch scroll-mt-20 lg:block">
+              <div id="chord-inspector" role="region" aria-label={previewChord ? `${previewChord} chord shape` : "Chord inspector"} tabIndex={-1}
+                className="sticky top-20 flex flex-col items-center bg-zinc-900/80 rounded-2xl border border-zinc-800 p-5 shadow-xl">
+                <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    Chord Inspector
+                  </span>
+                  <span className="text-[10px] text-zinc-400">Tap any chord</span>
+                </div>
 
-              {previewChord ? (
-                <div className="py-2 flex flex-col items-center w-full">
-                  <Fretboard chordName={previewChord} size="md" />
-                  <div className="mt-4 pt-3 border-t border-zinc-800/80 w-full flex items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleChord(previewChord)}
-                      className={`w-full py-2 px-3 text-xs font-bold rounded-xl transition-all ${
-                        selectedChords.includes(previewChord)
-                          ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                          : "bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-md shadow-amber-500/20"
-                      }`}
-                    >
-                      {selectedChords.includes(previewChord) ? "Remove From My Chords" : "Add To My Chords"}
-                    </button>
+                {previewChord ? (
+                  <div className="py-2 flex flex-col items-center w-full">
+                    <Fretboard chordName={previewChord} size="md" />
+                    <div className="mt-4 pt-3 border-t border-zinc-800/80 w-full flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleChord(previewChord)}
+                        className={`w-full py-2 px-3 text-xs font-bold rounded-xl transition-all ${
+                          selectedChords.includes(previewChord)
+                            ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                            : "bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-md shadow-amber-500/20"
+                        }`}
+                      >
+                        {selectedChords.includes(previewChord) ? "Remove From My Chords" : "Add To My Chords"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="py-12 text-center text-xs text-zinc-400">
-                  Select or hover over any chord to see string fingering
-                </div>
-              )}
+                ) : (
+                  <div className="py-12 text-center text-xs text-zinc-400">
+                    Select or hover over any chord to see string fingering
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>

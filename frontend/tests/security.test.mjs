@@ -32,6 +32,12 @@ test("development permits loopback audio and dev tooling", async () => {
   assert.throws(() => config({ NODE_ENV: "development", NEXT_PUBLIC_ENABLE_AUDIO_ML: "true", NEXT_PUBLIC_ML_API_URL: "https://other.example" }), /localhost/);
 });
 
+test("the local tuner can use the microphone with the recognition API disabled", async () => {
+  const headers = (await config({ NODE_ENV: "development" }).headers())[0].headers;
+  assert.match(headers.find(h => h.key === "Permissions-Policy").value, /microphone=\(self\)/);
+  assert.doesNotMatch(headers.find(h => h.key === "Content-Security-Policy").value, /:8100/);
+});
+
 test("public secrets and credential URLs fail without echoing values", () => {
   assert.throws(() => config({ NODE_ENV: "production", NEXT_PUBLIC_API_KEY: "sensitive-value" }), error => error.message.includes("NEXT_PUBLIC_API_KEY") && !error.message.includes("sensitive-value"));
   for (const url of ["https://user:password@api.example", "https://api.example?token=private", "http://api.example"]) {

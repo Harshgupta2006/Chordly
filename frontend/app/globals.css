@@ -47,7 +47,7 @@ nextjs-portal {
   height: 125vh;
   right: -18%;
   top: 0;
-  opacity: .13;
+  opacity: .24;
   background-image: url("/images/guitar-portrait.webp");
 }
 .guitar-background-macro {
@@ -59,6 +59,10 @@ nextjs-portal {
   background-image: url("/images/guitar-macro.webp");
 }
 .guitar-background-shade { position: absolute; inset: 0; background: linear-gradient(#09090b66, transparent 35%, #09090b33); }
+@media (min-width: 768px) and (max-width: 1279px), (min-width: 1280px) and (max-width: 1366px) and (max-height: 768px) {
+  .guitar-background-portrait { width: 45vw; height: 98vh; right: -12vw; }
+  .guitar-background-macro { width: 53vw; height: 88vh; left: -16vw; bottom: -12vh; }
+}
 .guitar-hero { position: relative; }
 .guitar-hero-viewport {
   position: relative;

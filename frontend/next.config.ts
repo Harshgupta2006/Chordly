@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 const localAudioEnabled = isDevelopment && process.env.NEXT_PUBLIC_ENABLE_AUDIO_ML === "true";
-const audioEnabled = !isDevelopment || localAudioEnabled;
 const localAudioUrl = new URL(localAudioEnabled ? process.env.NEXT_PUBLIC_ML_API_URL || "http://127.0.0.1:8100" : "http://127.0.0.1:8100");
 if (localAudioEnabled && !["localhost", "127.0.0.1"].includes(localAudioUrl.hostname)) {
   throw new Error("Local chord recognition requires a localhost/127.0.0.1 API URL.");
@@ -52,7 +51,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: audioEnabled ? "camera=(), microphone=(self), geolocation=()" : "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=(self), geolocation=()",
           },
           {
             key: "Content-Security-Policy",

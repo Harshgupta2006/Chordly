@@ -31,8 +31,8 @@ export function GuitarBackdrop({ targetId = "chordly-workspace" }: { targetId?: 
       });
       timeline
         .fromTo(".guitar-background-portrait",
-          { xPercent: 12, yPercent: 4, rotation: -12, rotationY: -10, z: -60, scale: 1, opacity: 0.15 },
-          { xPercent: -22, yPercent: -14, rotation: 10, rotationY: 14, z: 70, scale: 1.14, opacity: 0.03, duration: 1, ease: "none" }, 0)
+          { xPercent: 12, yPercent: 4, rotation: -12, rotationY: -10, z: -60, scale: 1 },
+          { xPercent: -22, yPercent: -14, rotation: 10, rotationY: 14, z: 70, scale: 1.14, duration: 1, ease: "none" }, 0)
         .fromTo(".guitar-background-macro",
           { xPercent: -10, yPercent: 16, rotation: 14, rotationY: 12, z: -80, scale: 0.9, opacity: 0 },
           { xPercent: 14, yPercent: -9, rotation: -7, rotationY: -12, z: 40, scale: 1.12, opacity: 0.13, duration: 1, ease: "none" }, 0);
@@ -268,7 +268,7 @@ export function GuitarScrollHero() {
         </svg>
         <div className="guitar-tour-navigation">
           <a className="guitar-hero-action" href="#your-chords">
-            Recognize a chord <span aria-hidden="true">↗</span>
+            Tune or recognize a chord <span aria-hidden="true">↗</span>
           </a>
           <a className="guitar-hero-action" href="#song-catalogue">
             Find songs <span aria-hidden="true">↗</span>

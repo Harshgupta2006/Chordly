@@ -7,6 +7,9 @@ import ts from "typescript";
 const compiled = ts.transpileModule(fs.readFileSync(new URL("../components/ChordRecognition.tsx", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
+const micSource = ts.transpileModule(fs.readFileSync(new URL("../lib/useMicrophone.ts", import.meta.url), "utf8"), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS },
+}).outputText;
 
 function nodes(tree) {
   if (Array.isArray(tree)) return tree.flatMap(nodes);
@@ -30,7 +33,7 @@ function recorder() {
     useState(initial) {
       const index = cursor++;
       slots[index] ??= { value: initial };
-      return [slots[index].value, value => { slots[index].value = value; }];
+      return [slots[index].value, value => { slots[index].value = typeof value === "function" ? value(slots[index].value) : value; }];
     },
     useRef(initial) { return slots[cursor++] ??= { current: initial }; },
     useCallback(callback, dependencies) {
@@ -57,21 +60,23 @@ function recorder() {
     createMediaStreamSource() { return { connect() {} }; }
   }
   class AudioWorkletNode {
-    constructor() { this.port = {}; processors.push(this); }
+    constructor() { this.port = { close() {} }; processors.push(this); }
     connect() {}
     disconnect() { this.disconnected = true; }
   }
   const prediction = { status: "silence", predicted_class: "F", chord: null, model_score: .9, class_scores: { F: .9, Noise: .1 } };
   const module = { exports: {} };
   const jsx = (type, props) => ({ type, props });
-  vm.runInNewContext(compiled, {
+  const mic = {};
+  const globals = {
     exports: module.exports, module, Blob, DOMException, AudioContext, AudioWorkletNode, document,
-    window: { isSecureContext: true },
+    window: { isSecureContext: true, addEventListener() {}, removeEventListener() {} },
     navigator: { mediaDevices: { getUserMedia() { calls.push("permission"); return new Promise(resolve => { permission = resolve; }); } } },
     URL: { createObjectURL: () => "blob:recording", revokeObjectURL() {} },
     setTimeout(callback, milliseconds) { const id = {}; timers.set(id, { callback, milliseconds }); return id; },
     clearTimeout: id => timers.delete(id), AbortController,
     require(name) {
+      if (name === "@/lib/useMicrophone") return mic;
       if (name === "react") return react;
       if (name === "react/jsx-runtime") return { jsx, jsxs: jsx };
       if (name === "@/lib/chords") return { CANONICAL_CHORDS_SET: new Set(["F"]) };
@@ -81,12 +86,14 @@ function recorder() {
       };
       throw new Error(`Unexpected import ${name}`);
     },
-  });
-  const render = () => {
+  };
+  vm.runInNewContext(micSource, { ...globals, exports: mic });
+  vm.runInNewContext(compiled, globals);
+  const render = (active = true) => {
     cursor = 0;
-    module.exports.ChordRecognition({ onConfirm() {} });
+    module.exports.ChordRecognition({ active, onConfirm() {} });
     cursor = 0;
-    return module.exports.ChordRecognition({ onConfirm() {} });
+    return module.exports.ChordRecognition({ active, onConfirm() {} });
   };
   return {
     render, contexts, processors, calls, track, document, prediction,
@@ -144,6 +151,20 @@ test("hiding the page interrupts capture and stops every microphone track", asyn
   assert.equal(view.track.stopped, true);
   assert.match(text(view.render()), /page was hidden/);
   assert.ok(view.button("Record a strum"));
+});
+
+test("switching tools releases a recording in progress and retains a completed take", async () => {
+  for (const complete of [false, true]) {
+    const view = recorder();
+    const pending = view.button("Record a strum").props.onClick();
+    view.allow();
+    await pending;
+    view.processors[0].port.onmessage({ data: new Float32Array(48000) });
+    if (complete) view.fire(3000);
+    assert.equal(view.render(false), null);
+    assert.equal(view.track.stopped, true);
+    assert.ok(view.button(complete ? "Recognize recording" : "Record a strum"));
+  }
 });
 
 test("an interrupted audio context stops capture and a recording with no PCM can be retried", async () => {

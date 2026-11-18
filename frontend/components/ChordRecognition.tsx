@@ -3,58 +3,47 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChordPrediction, encodeWav, formatChordLabel, predictChord } from "@/lib/audio";
 import { CANONICAL_CHORDS_SET } from "@/lib/chords";
+import { useMicrophone } from "@/lib/useMicrophone";
 
 type Phase = "idle" | "requesting" | "recording" | "ready" | "processing" | "result";
 
-export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => void }) {
+export function ChordRecognition({ onConfirm, active = true }: { onConfirm: (chord: string) => void; active?: boolean }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [recording, setRecording] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<ChordPrediction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const stream = useRef<MediaStream | null>(null);
-  const context = useRef<AudioContext | null>(null);
-  const capture = useRef<AudioWorkletNode | null>(null);
   const chunks = useRef<Float32Array[]>([]);
-  const capturing = useRef(false);
+  const sampleRate = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const request = useRef<AbortController | null>(null);
   const alive = useRef(true);
 
-  const release = useCallback(() => {
-    capturing.current = false;
+  const clearTake = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-    if (capture.current) {
-      capture.current.port.onmessage = null;
-      capture.current.disconnect();
-      capture.current = null;
-    }
-    stream.current?.getTracks().forEach((track) => { track.onended = null; track.stop(); }); stream.current = null;
-    if (context.current) {
-      context.current.onstatechange = null;
-      void context.current.close().catch(() => {});
-    }
-    context.current = null;
+    chunks.current = [];
+    sampleRate.current = 0;
   }, []);
+  const interrupted = useCallback((message: string) => {
+    clearTake();
+    setError(message);
+    setPhase("idle");
+  }, [clearTake]);
+  const { start: openMic, release } = useMicrophone(interrupted);
 
   useEffect(() => {
     alive.current = true;
-    return () => { alive.current = false; release(); request.current?.abort(); };
-  }, [release]);
+    return () => { alive.current = false; clearTake(); request.current?.abort(); };
+  }, [clearTake]);
 
   useEffect(() => {
-    const interrupt = () => {
-      if (!document.hidden || !context.current) return;
-      release();
-      chunks.current = [];
-      setError("Recording stopped when the page was hidden. Keep this page open and record again.");
-      setPhase("idle");
-    };
-    document.addEventListener("visibilitychange", interrupt);
-    return () => document.removeEventListener("visibilitychange", interrupt);
-  }, [release]);
+    if (active) return;
+    release();
+    clearTake();
+    setPhase(current => current === "requesting" || current === "recording" ? "idle" : current);
+  }, [active, clearTake, release]);
 
   useEffect(() => {
     if (!recording) { setPreview(null); return; }
@@ -63,84 +52,27 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
   }, [recording]);
 
   const stop = useCallback(() => {
-    if (!capturing.current || !context.current) return;
-    const sampleRate = context.current.sampleRate;
+    const rate = sampleRate.current;
+    if (!rate) return;
     const samples = chunks.current.reduce((n, chunk) => n + chunk.length, 0);
     release();
-    if (samples < sampleRate * 0.25) {
-      chunks.current = [];
+    if (samples < rate * 0.25) {
       setError("The recording was too short. Record one strum for 1–3 seconds.");
-      setPhase("idle"); return;
-    }
-    setRecording(encodeWav(chunks.current, sampleRate)); chunks.current = [];
-    setPhase("ready");
-  }, [release]);
-
-  const start = async () => {
-    if (context.current) return;
-    setError(null); setNotice(null); setResult(null); setRecording(null); setPhase("requesting");
-    let audioContext: AudioContext | null = null;
-    try {
-      if (!navigator.mediaDevices?.getUserMedia || !window.isSecureContext) {
-        throw new Error("Microphone access needs a supported browser on localhost or HTTPS.");
-      }
-      // Resume during the tap, before the asynchronous permission prompt loses activation.
-      audioContext = new AudioContext();
-      context.current = audioContext;
-      if (!audioContext.audioWorklet || typeof AudioWorkletNode === "undefined") {
-        throw new Error("This browser does not support microphone capture. Choose a WAV recording instead.");
-      }
-      const resumed = audioContext.resume();
-      void resumed.catch(() => {});
-      timer.current = setTimeout(() => {
-        if (context.current !== audioContext) return;
-        release();
-        setError("Microphone startup timed out. Check the browser permission prompt and try again.");
-        setPhase("idle");
-      }, 20000);
-      const input = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      });
-      if (!alive.current || context.current !== audioContext) { input.getTracks().forEach((track) => track.stop()); return; }
-      stream.current = input;
-      await audioContext.audioWorklet.addModule("/audio-capture-worklet.js");
-      await resumed;
-      if (!alive.current || context.current !== audioContext) return;
-      if (audioContext.state !== "running") throw new Error("Audio capture is paused. Keep this page open and try again.");
-      const node = new AudioWorkletNode(audioContext, "chordly-capture"); capture.current = node;
-      chunks.current = []; capturing.current = true;
-      node.port.onmessage = (event: MessageEvent<Float32Array>) => {
-        if (capturing.current) chunks.current.push(event.data);
-      };
-      audioContext.createMediaStreamSource(input).connect(node);
-      node.connect(audioContext.destination);
-      input.getAudioTracks().forEach(track => {
-        track.onended = () => {
-          if (context.current !== audioContext) return;
-          release(); chunks.current = [];
-          setError("Microphone access ended. Reconnect your microphone and record again.");
-          setPhase("idle");
-        };
-      });
-      audioContext.onstatechange = () => {
-        if (context.current !== audioContext || context.current?.state === "running") return;
-        release(); chunks.current = [];
-        setError("Audio capture was interrupted. Keep this page open and record again.");
-        setPhase("idle");
-      };
-      if (timer.current) clearTimeout(timer.current);
-      setPhase("recording"); timer.current = setTimeout(stop, 3000);
-    } catch (cause) {
-      if (audioContext && context.current !== audioContext) return;
-      release();
-      if (!alive.current) return;
-      const name = cause instanceof DOMException ? cause.name : "";
-      setError(name === "NotAllowedError" ? "Microphone permission was denied. Allow access in your browser settings, then retry."
-        : name === "NotFoundError" ? "No microphone was found. Connect one or choose a WAV recording."
-        : name === "NotReadableError" ? "The microphone is unavailable or in use by another application."
-        : cause instanceof Error ? cause.message : "Could not start the microphone.");
       setPhase("idle");
+    } else {
+      setRecording(encodeWav(chunks.current, rate));
+      setPhase("ready");
     }
+    clearTake();
+  }, [clearTake, release]);
+
+  const start = () => {
+    setError(null); setNotice(null); setResult(null); setRecording(null); setPhase("requesting");
+    return openMic(pcm => chunks.current.push(pcm), rate => {
+      sampleRate.current = rate;
+      setPhase("recording");
+      timer.current = setTimeout(stop, 3000);
+    });
   };
 
   const submit = async () => {
@@ -164,8 +96,9 @@ export function ChordRecognition({ onConfirm }: { onConfirm: (chord: string) => 
     : result?.status === "uncertain" ? "The model is uncertain. Try a clearer, isolated strum." : null;
   const topScores = result ? Object.entries(result.class_scores).sort((a, b) => b[1] - a[1]).slice(0, 3) : [];
 
+  if (!active) return null;
   return (
-    <section aria-labelledby="recognition-title" className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 sm:p-5">
+    <section aria-labelledby="recognition-title" className="min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="recognition-title" className="text-base font-bold text-zinc-100">Recognize a guitar chord</h2>
       </div>

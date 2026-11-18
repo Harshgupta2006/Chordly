@@ -132,6 +132,7 @@ test("a supported audio result confirms its chord through the existing selection
       useRef: value => ({ current: value }), useCallback: callback => callback, useEffect() {},
     },
     "@/lib/audio": { formatChordLabel: label => `${label} major` },
+    "@/lib/useMicrophone": { useMicrophone: () => ({}) },
     "@/lib/chords": { CANONICAL_CHORDS_SET: new Set(["A"]) },
   });
   const tree = ChordRecognition({ onConfirm: chord => { confirmed = chord; } });

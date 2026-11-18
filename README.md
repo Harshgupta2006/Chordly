@@ -1,7 +1,8 @@
 # Chordly
 
 Find guitar songs you can play with the chords you know, discover near matches,
-and choose which chord to learn next. Record a single strum or upload a WAV to
+and choose which chord to learn next. Tune your guitar with live pitch
+feedback from your microphone. Record a single strum or upload a WAV to
 recognize a chord, review the result, and confirm it before adding it to your list.
 
 ## Project highlights
@@ -12,6 +13,7 @@ recognize a chord, review the result, and confirm it before adding it to your li
 | Music discovery | **5 genres** with chord, difficulty and search filters |
 | Chord library | **47 chord shapes** with interactive fingering diagrams |
 | Audio recognition | **25 model classes** covering 24 major/minor chords and Noise |
+| Guitar tuner | **6 open strings** in standard tuning, with a live pitch meter referenced to **A4 = 440 Hz** |
 | Guitar anatomy | **16 labelled parts** across **6 guided groups**, with mobile tap-to-explore controls |
 
 Catalogue figures come from the bundled song and chord data. The audio model's
@@ -32,6 +34,7 @@ separately in [Audio model and evaluation](#audio-model-and-evaluation).
 ```text
 Browser -> Next.js / React / TypeScript
             |-- bundled catalogue + TypeScript set matching
+            |-- microphone -> YIN pitch detection -> live tuner (on device)
             `-- POST /api/audio/predict-chord (same-origin HTTPS)
                   -> dedicated FastAPI service -> ONNX Runtime (CPU)
 
@@ -137,6 +140,18 @@ Recall@5 and NDCG@5 using chronological practice-history splits. Personal histor
 .\ml\.venv\Scripts\python.exe ml/scripts/build_recommendation_features.py
 .\ml\.venv\Scripts\python.exe ml/scripts/evaluate_recommendations.py path/to/practice-history.json
 ```
+
+### Guitar tuner
+
+In **Your chords**, choose **Tune**, select **Low E, A, D, G, B, or High E**,
+and tap **Start tuner**. Pluck the selected string open and let it ring.
+The meter shows how far the note is flat or sharp in cents (100 cents make one
+semitone). Follow **Tune up** or **Tune down** until the meter reads **In tune**.
+
+The tuner shares the recorder's microphone capture and runs YIN pitch detection
+in the browser. Three stable readings within ±5 cents of the selected string
+produce **In tune**. Switching back to **Recognize** releases the tuner microphone
+and preserves a completed chord recording. Tuner audio stays on the device.
 
 ### Audio recognition flow
 
