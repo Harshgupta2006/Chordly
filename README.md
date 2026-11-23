@@ -244,26 +244,44 @@ background and links back to the opening view throughout the application.
 
 ## Audio model and evaluation
 
-The custom CNN was trained from scratch on the pinned
-[rodriler/isolated-guitar-chords dataset](https://huggingface.co/datasets/rodriler/isolated-guitar-chords).
-There are 780 recordings and 25 labels: 24 major/minor chords and Noise. The official
-split contains 633 training and 147 test recordings. Training was divided into
-506 train / 127 validation recordings before producing derived features.
+### Released model accuracy
 
-| Original training benchmark | Validation accuracy | Official test accuracy | Test macro F1 |
-| --- | ---: | ---: | ---: |
-| SVM, 88 aggregate features | 96.06% | 90.48% | 0.8998 |
-| CNN, 157,945 parameters | 99.21% | 87.76% | 0.8591 |
+The fine-tuned model served by Chordly scored **99.32% top-1 accuracy (146/147)**
+on the official Isolated Guitar Chords test set. Top-1 accuracy uses the model's
+highest-scoring label before Chordly applies its confidence and audio checks.
+With those checks applied, the recognizer returned the correct chord on
+**137/144 chord recordings (95.14%)**. The other three test recordings are labeled Noise.
 
-The released recognizer builds on that CNN. It was fine-tuned on public GuitarSet
-performances, fan-only recordings and quiet strums mixed with fan noise. It takes a
-Log-Mel spectrogram as input and returns a chord for the player to confirm.
+| Model | Official test top-1 accuracy | Test macro F1 |
+| --- | ---: | ---: |
+| **Fine-tuned CNN served by Chordly** | **99.32%** | **0.9933** |
+| Original CNN | 87.76% | 0.8591 |
+| Original SVM baseline | 90.48% | 0.8998 |
 
-An independent check used 333 chord passages from 18 Klangio phone recordings.
-The released model identified **296/333** passages at their original volume and
-**647/999** mixes with the guitar just 3 dB above the fan. Each passage was paired
-with three fan recordings. All **24/24** fan-only control clips were rejected.
+### Independent phone and fan-noise tests
+
+The phone test used 333 chord passages from 18 Klangio recordings. Each quiet
+passage was mixed separately with three public fan recordings.
+
+| Test condition | Released model result |
+| --- | ---: |
+| Guitar at original volume | **88.89% correct (296/333)** |
+| Guitar level reduced by 15 dB | **88.59% correct (295/333)** |
+| Quiet guitar 3 dB louder than the fan | **64.76% correct (647/999)** |
+| Fan-only controls | **24/24 rejected** |
+
+The phone and mixed-audio results count a recording as correct when Chordly
+returns the correct chord after its confidence and audio checks.
 [Evaluation protocol, sources and full results](ml/reports/public_fan_pilot.md#independent-phone-recordings)
+
+### Training and hosting
+
+The original CNN was trained from scratch on the
+[Isolated Guitar Chords dataset](https://huggingface.co/datasets/rodriler/isolated-guitar-chords),
+which has 780 recordings across 24 major and minor chords and a Noise class.
+The fine-tuned CNN builds on it using public GuitarSet performances, fan-only
+recordings and quiet strums mixed with fan noise. It takes a log-Mel spectrogram
+and returns a chord for the player to confirm.
 
 The hosted service runs the fine-tuned checkpoint exported to ONNX. Frozen
 normalization, label order, rejection threshold, Hann window and Mel filters are
