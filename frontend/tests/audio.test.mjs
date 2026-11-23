@@ -27,7 +27,7 @@ test("prediction uses multipart WAV and surfaces backend errors", async () => {
     return { ok: false, json: async () => ({ detail: "Only WAV audio is supported." }) };
   };
   await assert.rejects(sandbox.exports.predictChord(new Blob(["audio"]), new AbortController().signal), /Only WAV/);
-  assert.match(submitted.url, /\/audio\/predict-chord$/);
+  assert.equal(submitted.url, "/api/audio/predict-chord");
   assert.equal(submitted.options.body.get("audio").name, "strum.wav");
   assert.equal(submitted.options.headers, undefined);
 });

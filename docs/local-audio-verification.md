@@ -30,14 +30,17 @@ page, losing microphone access or interrupting the audio context stops capture.
 
 The AudioWorklet averages channels into mono samples and emits silent output to
 avoid feedback. Recording stops after three seconds. Review playback and Save WAV
-before submitting. The browser sends a multipart WAV to
-`http://127.0.0.1:8105/audio/predict-chord`. FastAPI validates the upload, loads the
+before submitting. The browser posts a multipart WAV to the frontend's
+`/api/audio/predict-chord`. In audio-enabled development, Next.js forwards it to
+`http://127.0.0.1:8105/audio/predict-chord` with the example settings above. FastAPI validates the upload, loads the
 local PyTorch checkpoint and applies its frozen preprocessing and rejection rules.
 An accepted result becomes a known chord only after confirmation.
 
-The exported runtime has the separate `/api/audio/predict-chord` route. Its local
-regression tests exercise ONNX inference independently. The local workspace above
-uses the PyTorch route.
+For the fine-tuned candidate add `--artifact-dir ml/artifacts/fan-pilot-02` to the
+FastAPI launcher command. On Vercel the same browser URL goes to the Python
+service and its bundled ONNX model. A plain `next start` serves only the frontend.
+To check a candidate export locally, use
+`python ml/scripts/export_hosted_model.py --artifact-dir ml/artifacts/fan-pilot-02 --bundle-dir ml/artifacts/hosted-pilot-02`.
 
 ## Checks and remaining microphone verification
 

@@ -31,6 +31,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // Vercel routes this path to its Python service. Mirror it for opt-in local development.
+  ...(localAudioEnabled && {
+    async rewrites() {
+      return [{
+        source: "/api/audio/predict-chord",
+        destination: `${localAudioUrl.origin}/audio/predict-chord`,
+      }];
+    },
+  }),
   // D2: Security headers for all routes
   async headers() {
     return [

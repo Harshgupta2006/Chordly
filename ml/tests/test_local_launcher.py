@@ -11,12 +11,13 @@ def launcher(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location("local_launcher", source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    threshold = tmp_path / "ml/artifacts/cnn/rejection.json"
-    threshold.parent.mkdir(parents=True)
-    threshold.write_text("{}")
+    checkpoint = tmp_path / "ml/artifacts/cnn"
+    checkpoint.mkdir(parents=True)
+    for filename in ("best.pt", "config.json", "rejection.json"):
+        (checkpoint / filename).touch()
     monkeypatch.setattr(module, "__file__", str(tmp_path / "ml/scripts/serve_api.py"))
     monkeypatch.setattr(uvicorn, "run", lambda *args, **kwargs: None)
-    for name in ["ENVIRONMENT", "ENABLE_AUDIO_ML", "DATABASE_URL_READONLY", "ALLOWED_ORIGINS"]:
+    for name in ["ENVIRONMENT", "ENABLE_AUDIO_ML", "DATABASE_URL_READONLY", "ALLOWED_ORIGINS", "CHORDLY_LOCAL_AUDIO_ARTIFACT_DIR"]:
         monkeypatch.setenv(name, "test")
     return module
 
@@ -25,6 +26,7 @@ def test_additional_loopback_frontend_origin(launcher, monkeypatch):
     import os
     monkeypatch.setattr("sys.argv", ["serve_api.py", "--port", "8105", "--frontend-origin", "http://127.0.0.1:3105"])
     launcher.main()
+    assert Path(os.environ["CHORDLY_LOCAL_AUDIO_ARTIFACT_DIR"]) == Path(launcher.__file__).resolve().parents[2] / "ml/artifacts/cnn"
     assert "http://127.0.0.1:3105" in os.environ["ALLOWED_ORIGINS"].split(",")
     assert "http://localhost:3000" in os.environ["ALLOWED_ORIGINS"].split(",")
 

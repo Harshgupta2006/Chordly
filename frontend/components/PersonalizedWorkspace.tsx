@@ -109,19 +109,7 @@ function PreferencesEditor({ preferences, onClose }: PreferencesEditorProps) {
           </select>
         </label>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <button className="personal-primary" type="submit">Save my preferences</button>
-        <button
-          className="personal-text-button"
-          type="button"
-          onClick={() => {
-            savePreferences(preferences);
-            onClose();
-          }}
-        >
-          Keep current preferences
-        </button>
-      </div>
+      <button className="personal-primary sm:justify-self-start" type="submit">Save my preferences</button>
     </form>
   );
 }

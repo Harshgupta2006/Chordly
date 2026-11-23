@@ -2,6 +2,7 @@
 
 import io
 import logging
+import os
 from pathlib import Path
 import sys
 import threading
@@ -23,7 +24,7 @@ def get_predictor():
     sys.path.insert(0, str(ml_root))
     from src.inference.predictor import Predictor
 
-    return Predictor()
+    return Predictor(artifact_dir=os.getenv("CHORDLY_LOCAL_AUDIO_ARTIFACT_DIR"))
 
 
 def _predict(content: bytes):

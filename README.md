@@ -5,6 +5,8 @@ and choose which chord to learn next. Tune your guitar with live pitch
 feedback from your microphone. Record a single strum or upload a WAV to
 recognize a chord, review the result, and confirm it before adding it to your list.
 
+[Open Chordly](https://chordly-seven.vercel.app/app)
+
 ## Project highlights
 
 | Area | Current scope |
@@ -149,7 +151,9 @@ The meter shows how far the note is flat or sharp in cents (100 cents make one
 semitone). Follow **Tune up** or **Tune down** until the meter reads **In tune**.
 
 The tuner shares the recorder's microphone capture and runs YIN pitch detection
-in the browser. Three stable readings within ±5 cents of the selected string
+in the browser. It compares repeating waveforms to track the string's fundamental
+even when an overtone is louder. Regression tests cover 180 combinations of string,
+detuning, harmonic content and microphone sample rate. Three stable readings within ±5 cents of the selected string
 produce **In tune**. Switching back to **Recognize** releases the tuner microphone
 and preserves a completed chord recording. Tuner audio stays on the device.
 
@@ -222,7 +226,8 @@ and the song title on both song-page routes.
 The Chordly logo returns to the opening view. Favorites jumps to saved songs and
 toggles back to ordinary matches on a second click. Opening a song preserves the
 workspace filters, expanded results and reading position for the return journey.
-Music preferences open by default. The Recently practised panel offers a Remove action,
+Music preferences open by default. **Save my preferences** applies genre, difficulty
+and practice-focus choices for the next visit. The Recently practised panel offers a Remove action,
 and clicking a song's Practised today control again removes that day's entry.
 The amber pick-and-headstock logo uses the supplied artwork with a transparent
 background and links back to the opening view throughout the application.
@@ -245,15 +250,22 @@ There are 780 recordings and 25 labels: 24 major/minor chords and Noise. The off
 split contains 633 training and 147 test recordings. Training was divided into
 506 train / 127 validation recordings before producing derived features.
 
-| Model | Validation accuracy | Official test accuracy | Test macro F1 |
+| Original training benchmark | Validation accuracy | Official test accuracy | Test macro F1 |
 | --- | ---: | ---: | ---: |
 | SVM, 88 aggregate features | 96.06% | 90.48% | 0.8998 |
 | CNN, 157,945 parameters | 99.21% | 87.76% | 0.8591 |
 
-The audio interface uses the custom CNN to predict isolated guitar chords from
-Log-Mel spectrograms and display the result for user confirmation.
+The released recognizer builds on that CNN. It was fine-tuned on public GuitarSet
+performances, fan-only recordings and quiet strums mixed with fan noise. It takes a
+Log-Mel spectrogram as input and returns a chord for the player to confirm.
 
-Hosting exports the existing checkpoint to ONNX without retraining. Frozen
+An independent check used 333 chord passages from 18 Klangio phone recordings.
+The released model identified **296/333** passages at their original volume and
+**647/999** mixes with the guitar just 3 dB above the fan. Each passage was paired
+with three fan recordings. All **24/24** fan-only control clips were rejected.
+[Evaluation protocol, sources and full results](ml/reports/public_fan_pilot.md#independent-phone-recordings)
+
+The hosted service runs the fine-tuned checkpoint exported to ONNX. Frozen
 normalization, label order, rejection threshold, Hann window and Mel filters are
 bundled with the model. NumPy/SciPy reproduce the spectral transform; ONNX Runtime
 runs inference on CPU. Parity tests compare features, scores, labels and rejection

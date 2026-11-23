@@ -39,6 +39,28 @@ test("a dominant second harmonic resolves to the plucked fundamental", () => {
   }
 });
 
+test("harmonic-rich plucks track their actual pitch even when detuned", () => {
+  const spectra = [[1], [0.07, 1], [0.13, 0.08, 1], [0.3, 1, 0.6, 0.1, 0.2], [0.12, 0.1, 0.14, 0.09, 1]];
+  for (const amplitudes of spectra) {
+    for (const hz of reference) {
+      for (const offset of [-18, 0, 18]) {
+        for (const rate of [44100, 48000]) {
+          const frequency = hz * 2 ** (offset / 1200);
+          const readings = [];
+          feed(createTuner(rate, hz, reading => readings.push(reading)), rate, t => {
+            const wave = amplitudes.reduce((total, amplitude, index) => total +
+              amplitude * Math.sin(2 * Math.PI * frequency * (index + 1) * t + 0.21 * index), 0);
+            return 0.15 * Math.exp(-2 * t) * wave;
+          }, 0.48);
+          const settled = readings.slice(-3);
+          assert.ok(settled.every(r => r && Math.abs(r.cents - offset) <= 2),
+            `${hz} Hz, ${offset} cents, ${rate} Hz sample rate, partials ${amplitudes}`);
+        }
+      }
+    }
+  }
+});
+
 test("a wrong string prompts a string check and a fading or unstable signal clears the reading", () => {
   const readings = [];
   const analyze = createTuner(48000, 110, value => readings.push(value));

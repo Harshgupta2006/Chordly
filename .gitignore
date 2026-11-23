@@ -77,6 +77,10 @@ frontend/AGENTS.md
 # Agent skills & scratch
 .agents/
 scratch/
+/output/
+/tmp/
+# Personal documents kept beside the source checkout
+/*.tex
 skills-lock.json
 
 # ML module - raw data, processed arrays, model artifacts (never commit)

@@ -20,11 +20,9 @@ under `scratch/ml_takeover_20261114_200516/`.
 | SVM (88 aggregate features) | 96.06% | 90.48% | 0.8998 |
 | Custom CNN (157,945 parameters) | 99.21% | 87.76% | 0.8591 |
 
-**The SVM performs better on the official test set.** The CNN is the experimental
-local recognition model requested for this feature; high softmax scores can be
-wrong. It missed every official-test D recording and rejected only 2 of 3 Noise
-recordings. Do not present these results as reliable real-world recognition.
-All model choices and the threshold were frozen before the one final test run.
+These benchmarks describe the original training run. The hosted recognizer uses
+the second fine-tuning checkpoint, evaluated separately on public phone recordings.
+[Fine-tuning and evaluation results](reports/public_fan_pilot.md)
 
 Read [LEARNING_GUIDE.md](LEARNING_GUIDE.md),
 [reports/milestone_1.md](reports/milestone_1.md), and
@@ -106,6 +104,38 @@ public training manifest, then run:
 ```
 
 This never trains on personal recordings and refuses to overwrite initial results.
+
+### Local public-data fine-tuning experiment
+
+The fan-noise pilot starts from the original CNN checkpoint. It uses public audio
+only. Place `annotation.zip` and `audio_mono-mic.zip` from
+[GuitarSet v1.1.0](https://zenodo.org/records/3371780) in
+`ml/data/public-tunerobust/`. From the repository root, run
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/scripts/fetch_finetune_fans.py
+.\ml\.venv\Scripts\python.exe ml/scripts/finetune_public.py
+```
+
+GuitarSet (Xi, Bittner, Pauwels, Ye and Bello, CC BY 4.0) supplies microphone
+recordings and performed-chord annotations. The pilot resamples and crops rhythm
+guitar takes to major/minor segments, attenuates a copy by 15 dB, and mixes it
+with household or computer fan audio at 3, 9 or 15 dB signal-to-noise ratio.
+The fan manifest records each Freesound creator, CC0 source page, public preview,
+split and file hash. Each guitarist and fan source belongs to one split.
+
+The existing training split supplies additional examples of the original classes.
+Model selection uses validation data and leaves the original rejection threshold
+fixed. The default output is a new `ml/artifacts/fan-pilot-01/` directory.
+`before.json` and `after.json` contain paired test decisions with source IDs,
+and `experiment.json` records the splits, weights hashes and validation history.
+To evaluate another labelled WAV folder with this candidate, pass
+`--artifact-dir ml/artifacts/fan-pilot-01` to `evaluate_personal.py`.
+
+Run `ml/scripts/refine_mixed.py` next to produce `ml/artifacts/fan-pilot-02/`,
+the checkpoint used by the hosted ONNX export. To preview that checkpoint in
+the local FastAPI service, pass `--artifact-dir ml/artifacts/fan-pilot-02` to
+`ml/scripts/serve_api.py`.
 
 ## Personalized recommendation features
 

@@ -1,5 +1,6 @@
 """Export the frozen local checkpoint for CPU hosting; never trains or downloads."""
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -18,9 +19,15 @@ from src.inference.predictor import Predictor
 
 
 def main():
-    destination = ML_ROOT.parent / "frontend/audio_backend/model"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--artifact-dir", type=Path, help="Source checkpoint for a candidate export")
+    parser.add_argument("--bundle-dir", type=Path, help="Destination service folder for the export")
+    args = parser.parse_args()
+    if args.artifact_dir and not args.bundle_dir:
+        parser.error("Select an explicit --bundle-dir when exporting a candidate")
+    destination = (args.bundle_dir or ML_ROOT.parent / "frontend/audio_backend") / "model"
     destination.mkdir(parents=True, exist_ok=True)
-    predictor = Predictor(device="cpu")
+    predictor = Predictor(artifact_dir=args.artifact_dir or ML_ROOT / "artifacts/fan-pilot-02", device="cpu")
     example = torch.zeros(1, 1, predictor.mel.n_mels, 130)
     model_path = destination / "chord_cnn.onnx"
     torch.onnx.export(

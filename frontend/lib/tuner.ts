@@ -15,7 +15,8 @@ export type TuningReading = { cents: number; status: "Tune up" | "In tune" | "Tu
 function pitch(frame: Float32Array, rate: number, difference: Float32Array) {
   let sum = 0, energy = 0;
   for (const x of frame) { sum += x; energy += x * x; }
-  if (energy / frame.length - (sum / frame.length) ** 2 < 0.003 ** 2) return null;
+  const variance = energy / frame.length - (sum / frame.length) ** 2;
+  if (variance < 0.003 ** 2) return null;
   const maxLag = difference.length - 1;
   const count = frame.length - maxLag;
   let cumulative = 0;
@@ -25,22 +26,32 @@ function pitch(frame: Float32Array, rate: number, difference: Float32Array) {
     cumulative += squared;
     difference[lag] = cumulative ? squared * lag / cumulative : 1;
   }
+  let period = 0;
+  let bestDifference = Infinity;
   for (let lag = Math.max(2, Math.floor(rate / 900)); lag < maxLag - 1; lag++) {
     if (difference[lag] >= 0.10) continue;
-    while (lag < maxLag - 1 && difference[lag + 1] < difference[lag]) lag++;
-    // A dominant second harmonic can create an earlier, shallower trough.
-    const twice = lag * 2;
-    if (twice + 2 < maxLag && difference[lag] > 0.015) {
-      let best = twice;
-      for (let i = twice - 2; i <= twice + 2; i++) if (difference[i] < difference[best]) best = i;
-      if (difference[best] < difference[lag] * 0.2) lag = best;
-    }
     const left = difference[lag - 1], center = difference[lag], right = difference[lag + 1];
+    if (center > left || center > right) continue;
     const curvature = left + right - 2 * center;
     const offset = curvature > 0 ? Math.max(-0.5, Math.min(0.5, (left - right) / (2 * curvature))) : 0;
-    return rate / (lag + offset);
+    // Shift both copies by half the fractional offset so a trough landing on an
+    // integer sample has no advantage. Prefer the shortest convincing repeat.
+    const step = Math.sign(offset);
+    const weight = Math.abs(offset) / 2;
+    let residual = 0;
+    for (let i = 1; i < count - 1; i++) {
+      const delta = (1 - weight) * (frame[i] - frame[i + lag])
+        + weight * (frame[i - step] - frame[i + lag + step]);
+      residual += delta * delta;
+    }
+    const depth = residual / (2 * (count - 2) * variance);
+    if (depth < bestDifference * 0.25) {
+      bestDifference = depth;
+      period = lag + offset;
+      if (depth < 0.0015) break;
+    }
   }
-  return null;
+  return period ? rate / period : null;
 }
 
 /** Overlapping 80 ms windows, bounded storage and about 12 kHz analysis at any mic rate. */

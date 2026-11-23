@@ -22,6 +22,7 @@ test("production CSP restricts connections and disallows eval and embedded objec
   assert.match(csp, /media-src 'self' blob:/);
   assert.equal(settings.productionBrowserSourceMaps, false);
   assert.equal(settings.poweredByHeader, false);
+  assert.equal(config({ NODE_ENV: "production", NEXT_PUBLIC_ENABLE_AUDIO_ML: "true" }).rewrites, undefined);
 });
 
 test("development permits loopback audio and dev tooling", async () => {
@@ -29,6 +30,9 @@ test("development permits loopback audio and dev tooling", async () => {
   const csp = (await settings.headers())[0].headers.find(h => h.key === "Content-Security-Policy").value;
   assert.match(csp, /http:\/\/127\.0\.0\.1:8100/);
   assert.match(csp, /unsafe-eval/);
+  const [recognition] = await settings.rewrites();
+  assert.equal(recognition.source, "/api/audio/predict-chord");
+  assert.equal(recognition.destination, "http://127.0.0.1:8100/audio/predict-chord");
   assert.throws(() => config({ NODE_ENV: "development", NEXT_PUBLIC_ENABLE_AUDIO_ML: "true", NEXT_PUBLIC_ML_API_URL: "https://other.example" }), /localhost/);
 });
 

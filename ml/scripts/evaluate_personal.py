@@ -18,12 +18,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("recordings", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--artifact-dir", type=Path, help="Local checkpoint folder to evaluate (defaults to the original CNN)")
     args = parser.parse_args()
     if args.output.exists():
         raise RuntimeError(
             "Personal evaluation output already exists; choose a new filename to preserve initial results"
         )
-    predictor = Predictor()
+    predictor = Predictor(artifact_dir=args.artifact_dir)
     rows = []
     truth = []
     pred = []

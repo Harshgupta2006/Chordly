@@ -11,6 +11,7 @@ import pytest
 pytest.importorskip("onnxruntime")
 
 from src.inference.predictor import Predictor
+from src.dataset import ML_ROOT, file_sha256
 from src.preprocessing.audio import load_audio
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,8 +26,10 @@ def test_waveform_transform_copy_is_identical():
     assert (HOSTED / "preprocessing.py").read_bytes() == (ROOT / "ml/src/preprocessing/audio.py").read_bytes()
 
 
-def test_original_and_export_agree_on_validation_and_generated_audio():
-    original, hosted = Predictor(device="cpu"), module.Predictor()
+def test_release_checkpoint_and_export_agree_on_validation_and_generated_audio():
+    original = Predictor(artifact_dir=ML_ROOT / "artifacts/fan-pilot-02", device="cpu")
+    hosted = module.Predictor()
+    assert file_sha256(original.root / "best.pt") == hosted.config["checkpoint_sha256"]
     report = json.loads((ROOT / "ml/data/dataset_inspection_report.json").read_text())
     # One existing validation recording per class; no test-set selection/tuning.
     split = np.load(ROOT / "ml/data/processed/validation_3s.npz")
