@@ -236,7 +236,7 @@ test("chord hover previews require pointer movement and retain keyboard previews
   }
 });
 
-test("progressions distinguish playing order and expose full descriptions", () => {
+test("progressions toggle on and off, distinguish playing order, and expose full descriptions", () => {
   const presets = [
     { id: "pop", name: "C - G - Am - F", chords: ["C", "G", "Am", "F"], description: "The famous 4-chord progression used in hundreds of pop hits." },
     { id: "doo-wop", name: "C - Am - F - G", chords: ["C", "Am", "F", "G"], description: "The timeless 50s ballad and soul progression." },
@@ -252,6 +252,11 @@ test("progressions distinguish playing order and expose full descriptions", () =
     const active = buttons.find(node => node.props["aria-pressed"]);
     assert.equal(active.props["aria-describedby"], `preset-description-${preset.id}`);
     active.props.onClick();
+    assert.deepEqual(Array.from(selected), []);
+    const cleared = ProgressionPresets({ selectedChords: selected, onSelectPreset: chords => { selected = chords; } });
+    const clearedButtons = nodes(cleared).filter(node => node.type === "button");
+    assert.ok(clearedButtons.every(node => node.props["aria-pressed"] === false));
+    clearedButtons.find(node => node.props["aria-describedby"] === active.props["aria-describedby"]).props.onClick();
     assert.deepEqual(selected, preset.chords);
     const tooltip = nodes(active).find(node => node.props?.role === "tooltip");
     assert.equal(text(tooltip), preset.description);

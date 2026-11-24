@@ -215,9 +215,7 @@ export default function WorkspacePage() {
   // Select progression preset
   const handleSelectPreset = (chords: string[]) => {
     setSelectedChords(chords);
-    if (chords.length > 0) {
-      setPreviewChord(chords[0]);
-    }
+    setPreviewChord(chords[0] ?? null);
   };
 
   // Clear all chords

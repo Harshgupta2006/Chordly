@@ -87,6 +87,12 @@ export const PROGRESSION_PRESETS: ProgressionPreset[] = [
     description: "Classic 12-bar delta blues chord trio.",
     chords: ["E7", "A7", "B7"],
   },
+  {
+    id: "jazz-turnaround",
+    name: "Dm7 - G7 - Cmaj7",
+    description: "A classic jazz ii–V–I that resolves to C major.",
+    chords: ["Dm7", "G7", "Cmaj7"],
+  },
 ];
 
 export const CANONICAL_CHORDS_SET: ReadonlySet<string> = new Set(

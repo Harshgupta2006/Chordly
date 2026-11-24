@@ -18,7 +18,7 @@ export function ProgressionPresets({
         <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-300">
           Progression Presets
         </h3>
-        <span className="text-xs text-zinc-400">Tap to load a progression</span>
+        <span className="text-xs text-zinc-400">Select a preset to load or clear it</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -30,7 +30,7 @@ export function ProgressionPresets({
             <button
               key={preset.id}
               type="button"
-              onClick={() => onSelectPreset(preset.chords)}
+              onClick={() => onSelectPreset(isActive ? [] : preset.chords)}
               aria-pressed={isActive}
               aria-describedby={`preset-description-${preset.id}`}
               className={`progression-preset flex flex-col text-left p-3 rounded-xl border transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 ${
