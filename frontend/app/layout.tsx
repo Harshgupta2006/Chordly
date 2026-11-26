@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -11,7 +10,6 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
   title: "Chordly: Guitar Song Discovery by Known Chords",
   description: "Select the chords you know to discover songs you can already play, near matches needing 1 or 2 more chords, and which chord to learn next.",
   keywords: ["guitar chords", "song discovery", "guitar tabs", "chord finder", "learn guitar songs"],
